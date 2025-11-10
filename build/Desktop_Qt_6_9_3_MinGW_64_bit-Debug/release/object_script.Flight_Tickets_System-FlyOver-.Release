@@ -1,0 +1,11 @@
+release/main.o
+release/mainwindow.o
+release/login.o
+release/register.o
+release/flightmanager.o
+release/dbmanager.o
+release/flight.o
+release/order.o
+release/user.o
+release/qrc_resources.o
+release/moc_mainwindow.o

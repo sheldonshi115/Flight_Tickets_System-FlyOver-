@@ -1,0 +1,5 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="/">
+<file alias="resources/style.qss">E:/Qt/Flight_Tickets_system-FlyOver-/resources/style.qss</file>
+</qresource>
+</RCC>
