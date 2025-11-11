@@ -7,9 +7,10 @@ TEMPLATE = app
 
 # 源文件列表（按实际目录结构填写）
 SOURCES += \
+    dialog_login.cpp \
     main.cpp \
     mainwindow.cpp
-    # login.cpp \
+    #dialog_login.cpp \
     # register.cpp \
     # flightmanager.cpp \
     # dbmanager.cpp \
@@ -19,8 +20,9 @@ SOURCES += \
 
 # 头文件列表
 HEADERS += \
+    dialog_login.h \
     mainwindow.h
-    # login.h \
+    # dialog_login.h \
     # register.h \
     # flightmanager.h \
     # dbmanager.h \
@@ -30,8 +32,9 @@ HEADERS += \
 
 # UI界面文件（Qt Designer生成）
 FORMS += \
+    dialog_login.ui \
     mainwindow.ui
-    # login.ui \
+    # dialog_login.ui \
     # register.ui \
     # flightmanager.ui
 
