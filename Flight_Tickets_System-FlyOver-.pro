@@ -7,33 +7,36 @@ TEMPLATE = app
 
 # 源文件列表（按实际目录结构填写）
 SOURCES += \
+    flightdialog.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
     # login.cpp \
     # register.cpp \
-    # flightmanager.cpp \
-    # dbmanager.cpp \
-    # models/flight.cpp \
+    flightmanager.cpp \
+    dbmanager.cpp \
+    models/flight.cpp
     # models/order.cpp \
     # models/user.cpp
 
 # 头文件列表
 HEADERS += \
-    mainwindow.h
+    flightdialog.h \
+    mainwindow.h \
     # login.h \
     # register.h \
-    # flightmanager.h \
-    # dbmanager.h \
-    # models/flight.h \
+    flightmanager.h \
+    dbmanager.h \
+    models/flight.h
     # models/order.h \
     # models/user.h
 
 # UI界面文件（Qt Designer生成）
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
     # login.ui \
     # register.ui \
-    # flightmanager.ui
+    flightdialog.ui \
+    flightmanager.ui
 
 # 资源文件（样式表、图标等）
 # RESOURCES += resources/resources.qrc  # 若需添加图标，可在resources下创建icons目录并更新此处
