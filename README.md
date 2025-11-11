@@ -38,6 +38,10 @@ FlightBookingSystem/
 ├─ flightmanager.cpp
 ├─ flightmanager.h
 │
+├─ flightdialog.ui
+├─ flightdialog.cpp
+├─ flightdialog.h
+│
 ├─ dbmanager.h                   # 数据库管理模块（连接池 / SQL 封装）
 ├─ dbmanager.cpp
 │
