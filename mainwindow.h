@@ -7,14 +7,14 @@ namespace Ui {
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QMainWindow
+{
     Q_OBJECT
+
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    void ShowLogin_Dialog();
-private slots:
-    void on_btnlogin_clicked();
+
 private:
     Ui::MainWindow *ui;
 };
