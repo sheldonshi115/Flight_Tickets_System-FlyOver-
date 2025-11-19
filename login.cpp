@@ -38,7 +38,7 @@ void LoginDialog::on_loginButton_clicked()
     }
 
     // 直接调用DBManager获取数据库连接
-    QSqlDatabase db = DBManager::getDatabase();
+    QSqlDatabase db = DBManager::instance().getDatabase();
     if (!db.isOpen()) {
         return; // DBManager已弹出连接失败提示，无需重复处理
     }

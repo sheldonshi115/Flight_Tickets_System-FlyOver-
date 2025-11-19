@@ -35,13 +35,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="btnlogin">
-         <property name="text">
-          <string>注册</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QPushButton" name="btnHome">
          <property name="text">
           <string>🏠 主页</string>
@@ -104,15 +97,14 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>25</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFlights">
     <property name="title">
      <string>航班管理(&amp;F)</string>
     </property>
-    <addaction name="actionAddFlight"/>
-    <addaction name="actionManageFlights"/>
+    <addaction name="actionFlightManager"/>
    </widget>
    <widget class="QMenu" name="menuOrders">
     <property name="title">
@@ -147,9 +139,9 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionAddFlight">
+  <action name="actionFlightManager">
    <property name="text">
-    <string>添加航班</string>
+    <string>航班管理</string>
    </property>
   </action>
   <action name="actionManageFlights">

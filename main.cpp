@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
 
     // 初始化数据库（自动创建表）
-    if (!DBManager::initDatabase()) {
+    if (!DBManager::instance().initDatabase()) {
         QMessageBox::critical(nullptr, "初始化失败", "数据库初始化失败，程序将退出");
         return -1;
     }

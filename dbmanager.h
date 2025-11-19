@@ -1,28 +1,41 @@
-// dbmanager.h
 #ifndef DBMANAGER_H
 #define DBMANAGER_H
 
+#include <QObject>
 #include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlError>
-#include <QString>
+#include <QList>
+#include "flight.h" // 引入 Flight 类
 
-class DBManager {
-public:
-    // 单例模式：获取数据库实例
-    static QSqlDatabase getDatabase();
-    // 初始化数据库（创建表）
-    static bool initDatabase();
+class DBManager : public QObject
+{
+    Q_OBJECT
 
 private:
-    // 私有构造，禁止外部实例化
-    DBManager() = default;
-    // 数据库配置
+    // 单例模式：私有构造函数
+    explicit DBManager(QObject *parent = nullptr);
+    QSqlDatabase db;
+
+    // 数据库配置参数
     static const QString DB_NAME;
     static const QString DB_HOST;
     static const QString DB_USER;
     static const QString DB_PWD;
     static const int DB_PORT;
+
+public:
+    // 单例模式：获取唯一实例
+    static DBManager &instance();
+
+    // 初始化数据库（创建表）
+    bool initDatabase();
+
+    // 航班操作方法
+    QList<Flight> getAllFlights();
+    QList<Flight> findFlights(const QString& departure, const QString& arrival, const QDateTime& date);
+    QSqlDatabase getDatabase() { return db; }
+    bool addFlight(const Flight& flight);
+    bool updateFlight(const Flight& flight);
+    bool removeFlight(int flightId);
 };
 
 #endif // DBMANAGER_H
