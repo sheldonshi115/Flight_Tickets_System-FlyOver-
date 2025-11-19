@@ -41,8 +41,8 @@ void RegisterDialog::on_registerButton_clicked()
         return;
     }
 
-    // 直接调用DBManager获取数据库连接
-    QSqlDatabase db = DBManager::getDatabase();
+    // 通过单例实例调用DBManager获取数据库连接
+    QSqlDatabase db = DBManager::instance().getDatabase();
     if (!db.isOpen()) {
         return; // DBManager已处理连接失败
     }
