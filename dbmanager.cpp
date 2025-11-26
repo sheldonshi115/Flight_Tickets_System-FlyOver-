@@ -6,10 +6,10 @@
 #include <ctime>
 #include <cstdlib>
 // 初始化静态常量
-const QString DBManager::DB_NAME = "login_db";
+const QString DBManager::DB_NAME = "flight_ticket_db";
 const QString DBManager::DB_HOST = "localhost";
 const QString DBManager::DB_USER = "root";
-const QString DBManager::DB_PWD = "woshinidie1218";
+const QString DBManager::DB_PWD = "YOUR pwd";
 const int DBManager::DB_PORT = 3306;
 
 // 单例模式：静态实例
