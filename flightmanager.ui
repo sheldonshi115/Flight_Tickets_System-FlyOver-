@@ -4,8 +4,8 @@
  <widget class="QWidget" name="FlightManager">
   <property name="geometry">
    <rect>
-    <x>100</x>
-    <y>100</y>
+    <x>0</x>
+    <y>0</y>
     <width>1024</width>
     <height>600</height>
    </rect>
@@ -57,15 +57,15 @@
       </item>
       <item>
        <widget class="QDateTimeEdit" name="dateEdit">
-        <property name="calendarPopup">
-         <bool>true</bool>
-        </property>
         <property name="date">
          <date>
           <year>2024</year>
           <month>11</month>
           <day>12</day>
          </date>
+        </property>
+        <property name="calendarPopup">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -86,20 +86,19 @@
      </layout>
     </widget>
    </item>
-
    <item>
     <widget class="QTableWidget" name="tableView">
      <property name="alternatingRowColors">
       <bool>true</bool>
      </property>
      <property name="selectionBehavior">
-      <enum>QAbstractItemView::SelectRows</enum>
+      <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
      </property>
      <property name="showGrid">
       <bool>true</bool>
      </property>
      <property name="gridStyle">
-      <enum>Qt::DotLine</enum>
+      <enum>Qt::PenStyle::DotLine</enum>
      </property>
      <property name="sortingEnabled">
       <bool>true</bool>
@@ -146,13 +145,12 @@
      </column>
     </widget>
    </item>
-
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -165,31 +163,21 @@
      <item>
       <widget class="QPushButton" name="btnAdd">
        <property name="text">
-        <string>新增航班</string>
+        <string>选择航班</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnEdit">
+      <widget class="QPushButton" name="exitButton">
        <property name="text">
-        <string>编辑航班</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btnDelete">
-       <property name="text">
-        <string>删除航班</string>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">color: rgb(255, 0, 0);</string>
+        <string>退出</string>
        </property>
       </widget>
      </item>
      <item>
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>

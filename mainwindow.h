@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 #include "flightmanager.h"
-
 namespace Ui {
 class MainWindow;
 }
@@ -18,9 +17,11 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    FlightManager *m_flightManager; // 成员变量移至private（封装性更好）
+    FlightManager *m_flightManager;    // 成员变量移至private（封装性更好）
+
 
 private slots:
+    void onTravelButtonClicked();
     void on_actionFlightManager_triggered(); // 新增：菜单点击的槽函数
 };
 

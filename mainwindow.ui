@@ -49,6 +49,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="travelbutton">
+         <property name="text">
+          <string>旅行动态</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="btnOrders">
          <property name="text">
           <string>🧾 订单管理</string>
@@ -97,7 +104,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>26</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFlights">

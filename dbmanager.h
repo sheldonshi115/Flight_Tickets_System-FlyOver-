@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QSqlDatabase>
 #include <QList>
+#include <QtMath>
 #include "flight.h" // 引入 Flight 类
 
 class DBManager : public QObject
@@ -21,6 +22,7 @@ private:
     static const QString DB_USER;
     static const QString DB_PWD;
     static const int DB_PORT;
+    void insertTestFlights();
 
 public:
     // 单例模式：获取唯一实例

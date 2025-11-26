@@ -6,6 +6,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    connect(ui->travelbutton, &QPushButton::clicked, this, &MainWindow::onTravelButtonClicked);
     setWindowTitle("航班票务系统 - 主菜单");
     // 主界面不添加任何航班管理相关控件
 }
@@ -14,7 +15,10 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+void MainWindow::onTravelButtonClicked()
+{
 
+}
 // 点击“航班管理”菜单后，打开独立的FlightManager窗口
 void MainWindow::on_actionFlightManager_triggered()
 {
