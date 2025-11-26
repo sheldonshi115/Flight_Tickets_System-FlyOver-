@@ -18,10 +18,9 @@ public:
 
 private slots:
     void onAddFlightClicked();
-    void onEditFlightClicked();
-    void onDeleteFlightClicked();
     void onSearchFlightsClicked();
     void onRefreshClicked();
+    void onExitClicked();
 
 private:
     Ui::FlightManager *ui;

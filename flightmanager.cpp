@@ -13,10 +13,9 @@ FlightManager::FlightManager(QWidget *parent) :
     onRefreshClicked();
 
     connect(ui->btnAdd, &QPushButton::clicked, this, &FlightManager::onAddFlightClicked);
-    connect(ui->btnEdit, &QPushButton::clicked, this, &FlightManager::onEditFlightClicked);
-    connect(ui->btnDelete, &QPushButton::clicked, this, &FlightManager::onDeleteFlightClicked);
     connect(ui->btnSearch, &QPushButton::clicked, this, &FlightManager::onSearchFlightsClicked);
     connect(ui->btnRefresh, &QPushButton::clicked, this, &FlightManager::onRefreshClicked);
+    connect(ui->exitButton,&QPushButton::clicked,this,&FlightManager::onExitClicked);
 }
 
 FlightManager::~FlightManager()
@@ -33,6 +32,7 @@ void FlightManager::setupTableView()
         "总座位", "可用座位"
     });
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->tableView->hideColumn(0); // 隐藏id列
 }
 
@@ -83,38 +83,24 @@ void FlightManager::onAddFlightClicked()
     }
 }
 
-void FlightManager::onEditFlightClicked()
-{
-    Flight flight = getSelectedFlight();
-    if (flight.id() == 0) return; // 改为判断id，更可靠
-
-    FlightDialog dialog(this, flight);
-    if (dialog.exec() == QDialog::Accepted) {
-        Flight updatedFlight = dialog.getFlight();
-        updatedFlight.setId(flight.id()); // 确保id不变
-        DBManager::instance().updateFlight(updatedFlight);
-        onRefreshClicked();
-    }
-}
-
-void FlightManager::onDeleteFlightClicked()
-{
-    Flight flight = getSelectedFlight();
-    if (flight.id() == 0) return; // 改为判断id是否为空
-
-    if (QMessageBox::question(this, "确认删除",
-                              QString("确定要删除航班 %1 吗？").arg(flight.flightNumber()),
-                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-        DBManager::instance().removeFlight(flight.id()); // 传入id
-        onRefreshClicked();
-    }
+void FlightManager::onExitClicked(){
+    this->close();
 }
 
 void FlightManager::onSearchFlightsClicked()
 {
-    QString departure = ui->txtDeparture->text();
-    QString arrival = ui->txtArrival->text();
-    QDateTime date = ui->dateEdit->dateTime();
+    QString departure = ui->txtDeparture->text().trimmed(); // 去除首尾空格，避免空字符干扰
+    QString arrival = ui->txtArrival->text().trimmed();
+
+    // 关键修正：显式传入时间（00:00:00），兼容所有Qt版本
+    QDate selectedDate = ui->dateEdit->date(); // 获取选择的日期
+    QTime zeroTime(0, 0, 0); // 构造“00:00:00”的时间对象
+    QDateTime date(selectedDate, zeroTime); // 同时传QDate+QTime，兼容所有Qt版本
+
+    // 优化：若用户未修改dateEdit（保持默认最小日期），则不限制日期
+    if (selectedDate == ui->dateEdit->minimumDate()) {
+        date = QDateTime(); // 设为无效QDateTime，跳过日期过滤
+    }
 
     QList<Flight> results = DBManager::instance().findFlights(departure, arrival, date);
     loadFlightsToTable(results);

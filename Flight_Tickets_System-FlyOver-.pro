@@ -1,5 +1,4 @@
-QT       += core gui sql  # 核心库、GUI库、数据库模块（MySQL支持）
-
+QT       += core gui sql network# 核心库、GUI库、数据库模块（MySQL支持）
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  # 兼容Qt5及以上版本的Widgets
 
 TARGET = Flight_Tickets_System-FlyOver-  # 可执行程序名称（与项目名一致）
@@ -41,7 +40,7 @@ FORMS += \
     flightmanager.ui
 
 # 资源文件（样式表、图标等）
-# RESOURCES += resources/resources.qrc  # 若需添加图标，可在resources下创建icons目录并更新此处
+RESOURCES += resources/resources.qrc  # 若需添加图标，可在resources下创建icons目录并更新此处
 
 # 数据库驱动配置（确保MySQL连接）
 # QT += sql
