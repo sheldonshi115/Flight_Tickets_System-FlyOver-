@@ -9,7 +9,7 @@
 const QString DBManager::DB_NAME = "flight_ticket_db";
 const QString DBManager::DB_HOST = "localhost";
 const QString DBManager::DB_USER = "root";
-const QString DBManager::DB_PWD = "YOUR pwd";
+const QString DBManager::DB_PWD = "YOUR PWD";
 const int DBManager::DB_PORT = 3306;
 
 // 单例模式：静态实例
@@ -146,7 +146,7 @@ bool DBManager::initDatabase()
         qDebug() << "数据表检查/创建成功。";
         if(query.exec("SELECT COUNT(*) FROM flights")&&query.next()){
             int dataCount = query.value(0).toInt();
-            if(dataCount == 100){
+            if(dataCount < 1000){
                 insertTestFlights();
                 qDebug()<<"已在表中插入了1000条初始航班数据!";
             }else{
