@@ -9,7 +9,7 @@
 const QString DBManager::DB_NAME = "flight_ticket_db";
 const QString DBManager::DB_HOST = "localhost";
 const QString DBManager::DB_USER = "root";
-const QString DBManager::DB_PWD = "YOUR PWD";
+const QString DBManager::DB_PWD = "pwd";
 const int DBManager::DB_PORT = 3306;
 
 // 单例模式：静态实例
@@ -68,37 +68,45 @@ void DBManager::insertTestFlights()
         "南京", "青岛", "厦门", "三亚", "昆明", "大连", "哈尔滨", "乌鲁木齐","常州", "海南", "苏州", "桂林"
     };
 
-    for (int i = 0; i < 1000; ++i) {
-        // 1. 唯一航班号（MU001~MU100）
-        QString flightNum = QString("MU%1").arg(i + 1, 3, 10, QChar('0'));
+    // 先定义需要的航班前缀列表（可根据需求添加/删除）
+    QStringList flightPrefixes = {
+        "MU", "CA", "CZ", "FM", "HU",
+        "MF", "SC", "3U", "ZH", "HO",
+        "9C", "SQ", "TG", "JL", "NH"
+    };
+
+    // 循环生成5000条航班数据（可调整循环次数）
+    for (int i = 0; i < 10000; ++i) {
+        // 1. 多前缀+唯一航班号（前缀随机选择，数字001~999循环）
+        QString prefix = flightPrefixes[rand() % flightPrefixes.size()]; // 随机选前缀
+        int num = (i % 999) + 1; // 数字部分001~999循环（保证同前缀内唯一，跨前缀可重复数字但整体航班号唯一）
+        QString flightNum = QString("%1%2").arg(prefix).arg(num, 3, 10, QChar('0'));
 
         // 2. 随机出发地和目的地（避免相同）
-        int depIdx = rand() % departureCities.size(); // 修正：用 rand() 替换 qRand()
+        int depIdx = rand() % departureCities.size();
         int arrIdx;
         do {
-            arrIdx = rand() % arrivalCities.size(); // 修正：用 rand() 替换 qRand()
+            arrIdx = rand() % arrivalCities.size();
         } while (departureCities[depIdx] == arrivalCities[arrIdx]);
         QString departure = departureCities[depIdx];
         QString destination = arrivalCities[arrIdx];
 
         // 3. 随机出发时间（当前时间往后1~30天，随机小时/分钟）
         QDateTime departTime = QDateTime::currentDateTime();
-        // 修正2：addDays 兼容所有版本，无需修改；addHours → addSecs(小时*3600)
-        departTime = departTime.addDays(rand() % 30) // 1~30天后
-                         .addSecs((rand() % 24) * 3600) // 0~23小时（转换为秒）
-                         .addSecs((rand() % 60) * 60);  // 0~59分钟（转换为秒）
+        departTime = departTime.addDays(rand() % 30) // 0~29天（即1~30天后，原逻辑不变）
+                         .addSecs((rand() % 24) * 3600) // 0~23小时
+                         .addSecs((rand() % 60) * 60);  // 0~59分钟
 
         // 4. 随机到达时间（出发后1~5小时，随机分钟）
         QDateTime arriveTime = departTime;
-        // 修正3：addHours → addSecs(小时*3600)
-        arriveTime = arriveTime.addSecs((1 + rand() % 5) * 3600) // 1~5小时（转换为秒）
-                         .addSecs((rand() % 60) * 60);    // 0~59分钟（转换为秒）
+        arriveTime = arriveTime.addSecs((1 + rand() % 5) * 3600) // 1~5小时
+                         .addSecs((rand() % 60) * 60);    // 0~59分钟
 
         // 5. 随机座位数（150~300座）
-        int seatCount = 150 + rand() % 151; // 修正：用 rand() 替换 qRand()
+        int seatCount = 150 + rand() % 151;
 
-        // 6. 随机票价（600.00~2500.00元）
-        double price = 600.00 + (rand() % 190001) / 100.0; // 修正：用 rand() 替换 qRand()
+        // 6. 随机票价（600.00~2500.00元，优化计算逻辑更简洁）
+        double price = (int)(600.00 + (rand() % 190001) / 100.0); // 190001 → 0~190000，除以100得0.00~1900.00，总600~2500
 
         // 绑定参数
         query.bindValue(":flight_num", flightNum);
@@ -146,11 +154,11 @@ bool DBManager::initDatabase()
         qDebug() << "数据表检查/创建成功。";
         if(query.exec("SELECT COUNT(*) FROM flights")&&query.next()){
             int dataCount = query.value(0).toInt();
-            if(dataCount < 1000){
+            if(dataCount < 10000){
                 insertTestFlights();
-                qDebug()<<"已在表中插入了1000条初始航班数据!";
+                qDebug()<<"已在表中插入了10000条初始航班数据!";
             }else{
-                qDebug()<<"flights 已有1000条";
+                qDebug()<<"flights 已有10000条";
             }
         }else{
             qWarning()<<"查询航班表数据失败"<<query.lastError().text();

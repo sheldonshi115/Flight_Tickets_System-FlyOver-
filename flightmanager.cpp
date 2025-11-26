@@ -11,7 +11,12 @@ FlightManager::FlightManager(QWidget *parent) :
     ui->setupUi(this);
     setupTableView();
     onRefreshClicked();
-
+    ui->dateEdit->setDisplayFormat("yyyy-MM-dd");
+    QDate currentDate = QDate::currentDate();
+    QDate endDate = currentDate.addMonths(1);
+    ui->dateEdit->setDate(currentDate);
+    ui->dateEdit->setMinimumDate(currentDate);
+    ui->dateEdit->setMaximumDate(endDate);
     connect(ui->btnAdd, &QPushButton::clicked, this, &FlightManager::onAddFlightClicked);
     connect(ui->btnSearch, &QPushButton::clicked, this, &FlightManager::onSearchFlightsClicked);
     connect(ui->btnRefresh, &QPushButton::clicked, this, &FlightManager::onRefreshClicked);
