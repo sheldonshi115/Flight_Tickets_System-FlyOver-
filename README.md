@@ -22,7 +22,7 @@
 FlightBookingSystem/
 ├─ main.cpp                      # 程序入口
 │
-├─ mainwindow.ui                 # 主窗口界面
+├─ mainwindow.ui                 # 主窗口（带侧边栏导航）
 ├─ mainwindow.cpp
 ├─ mainwindow.h
 │
@@ -34,31 +34,37 @@ FlightBookingSystem/
 ├─ register.cpp
 ├─ register.h
 │
-├─ flightmanager.ui              # 管理员航班管理界面
-├─ flightmanager.cpp
-├─ flightmanager.h
+├─ views/                        # 👈 新增：所有用户界面集中在这里
+│   ├─ homepage.ui               # 主页（欢迎页 / 概览）
+│   ├─ flightsearch.ui           # 航班查询（核心！）
+│   ├─ traveldynamic.ui          # 旅行动态
+│   ├─ ordermanagement.ui        # 订单管理
+│   └─ userprofile.ui            # 我的信息
 │
-├─ dbmanager.h                   # 数据库管理模块（连接池 / SQL 封装）
+├─ admin/                        # 👈 明确区分管理员功能
+│   ├─ flightmanager.ui          # 航班管理（原位置移动过来）
+│   ├─ flightmanager.cpp
+│   └─ flightmanager.h
+│
+├─ dbmanager.h                   # 数据库管理（保持不变）
 ├─ dbmanager.cpp
 │
-├─ models/                       # 数据模型层
-│   ├─ user.h / user.cpp         # 用户模型类
-│   ├─ flight.h / flight.cpp     # 航班模型类
-│   ├─ order.h / order.cpp       # 订单模型类
+├─ models/                       # 数据模型层（保持不变）
+│   ├─ user.h / user.cpp
+│   ├─ flight.h / flight.cpp
+│   └─ order.h / order.cpp
 │
-├─ resources/                    # 静态资源
-│   ├─ icons/                    # 图标资源
-│   └─ style.qss                 # Qt 样式表（全局 UI 主题）
+├─ resources/
+│   ├─ icons/
+│   └─ style.qss
 │
 ├─ sql/
-│   └─ init_tables.sql           # 数据库初始化脚本（建表 + 示例数据）
+│   └─ init_tables.sql
 │
-├─ docs/
-│   ├─ ERD.png                   # 数据库实体关系图
-│   ├─ project_plan.md           # 项目计划与分工说明（本文件）
-│   └─ report.md                 # 最终报告 / 技术说明
-│
-└─ README.md                     # 项目说明文件（当前文件）
+└─ docs/                         # 文档（保持不变）
+    ├─ ERD.png
+    ├─ project_plan.md
+    └─ report.md
 ```
 
 ---
