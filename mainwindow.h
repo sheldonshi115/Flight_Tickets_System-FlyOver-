@@ -23,6 +23,8 @@ private:
 private slots:
     void onTravelButtonClicked();
     void on_actionFlightManager_triggered(); // 新增：菜单点击的槽函数
+    void on_actionLogout_triggered(); // 退出登录
+    void on_actionProfile_triggered(); // 个人信息
 };
 
 #endif // MAINWINDOW_H

@@ -10,6 +10,7 @@ SOURCES += \
     flightdialog.cpp \
     main.cpp \
     dbmanager.cpp \
+    profiledialog.cpp \
     register.cpp \
     login.cpp \
     mainwindow.cpp \
@@ -23,6 +24,7 @@ HEADERS += \
     dbmanager.h \
     flight.h \
     flightdialog.h \
+    profiledialog.h \
     register.h \
     login.h \
     mainwindow.h \
@@ -34,6 +36,7 @@ HEADERS += \
 # UI界面文件
 FORMS += \
     flightdialog.ui \
+    profiledialog.ui \
     register.ui \
     login.ui \
     mainwindow.ui \

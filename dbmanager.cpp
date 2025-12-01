@@ -9,7 +9,7 @@
 const QString DBManager::DB_NAME = "flight_ticket_db";
 const QString DBManager::DB_HOST = "localhost";
 const QString DBManager::DB_USER = "root";
-const QString DBManager::DB_PWD = "pwd";
+const QString DBManager::DB_PWD = "cai2166013";
 const int DBManager::DB_PORT = 3306;
 
 // 单例模式：静态实例
@@ -149,25 +149,42 @@ bool DBManager::initDatabase()
             price DECIMAL(10,2) NOT NULL
         )
     )";
-    // 执行建表语句
-    if(query.exec(createUsers) && query.exec(createFlights)) {
-        qDebug() << "数据表检查/创建成功。";
-        if(query.exec("SELECT COUNT(*) FROM flights")&&query.next()){
-            int dataCount = query.value(0).toInt();
-            if(dataCount < 10000){
-                insertTestFlights();
-                qDebug()<<"已在表中插入了10000条初始航班数据!";
-            }else{
-                qDebug()<<"flights 已有10000条";
-            }
-        }else{
-            qWarning()<<"查询航班表数据失败"<<query.lastError().text();
-        }
-        return true;
-    } else {
+    // 1. 先创建基础表
+    if(!query.exec(createUsers) || !query.exec(createFlights)) {
         qWarning() << "创建数据表失败:" << query.lastError().text();
         return false;
     }
+
+    // 2. 检查并添加 users 表的 nickname 字段（如果不存在）
+    query.exec("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'flight_ticket_db' AND TABLE_NAME = 'users' AND COLUMN_NAME = 'nickname'");
+    if (!query.next()) {
+        if (!query.exec("ALTER TABLE users ADD COLUMN nickname VARCHAR(50) DEFAULT '' COMMENT '用户昵称'")) {
+            qWarning() << "添加 nickname 字段失败:" << query.lastError().text();
+        }
+    }
+
+    // 3. 检查并添加 users 表的 avatar_path 字段（如果不存在）
+    query.exec("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'flight_ticket_db' AND TABLE_NAME = 'users' AND COLUMN_NAME = 'avatar_path'");
+    if (!query.next()) {
+        if (!query.exec("ALTER TABLE users ADD COLUMN avatar_path VARCHAR(255) DEFAULT '' COMMENT '头像文件路径'")) {
+            qWarning() << "添加 avatar_path 字段失败:" << query.lastError().text();
+        }
+    }
+
+    // 4. 插入测试航班数据（原有逻辑不变）
+    qDebug() << "数据表检查/创建成功。";
+    if(query.exec("SELECT COUNT(*) FROM flights")&&query.next()){
+        int dataCount = query.value(0).toInt();
+        if(dataCount < 10000){
+            insertTestFlights();
+            qDebug()<<"已在表中插入了10000条初始航班数据!";
+        }else{
+            qDebug()<<"flights 已有10000条";
+        }
+    }else{
+        qWarning()<<"查询航班表数据失败"<<query.lastError().text();
+    }
+    return true;
 }
 
 // 获取所有航班
@@ -334,6 +351,47 @@ bool DBManager::removeFlight(int flightId)
         return true;
     } else {
         qWarning() << "删除航班失败:" << query.lastError().text();
+        return false;
+    }
+}
+
+// 1. 获取用户个人资料（根据账号查询昵称和头像路径）
+QVariantMap DBManager::getUserProfile(const QString& account)
+{
+    QVariantMap profile;
+    if (!db.isOpen()) return profile;
+
+    QSqlQuery query(db);
+    query.prepare("SELECT nickname, avatar_path FROM users WHERE account = :account");
+    query.bindValue(":account", account);
+
+    if (query.exec() && query.next()) {
+        profile["nickname"] = query.value("nickname").toString();
+        profile["avatar_path"] = query.value("avatar_path").toString();
+    } else {
+        qWarning() << "查询用户资料失败:" << query.lastError().text();
+        profile["nickname"] = "";
+        profile["avatar_path"] = "";
+    }
+    return profile;
+}
+
+// 2. 更新用户个人资料（根据账号更新昵称和头像路径）
+bool DBManager::updateUserProfile(const QString& account, const QString& nickname, const QString& avatarPath)
+{
+    if (!db.isOpen() || account.isEmpty()) return false;
+
+    QSqlQuery query(db);
+    query.prepare("UPDATE users SET nickname = :nickname, avatar_path = :avatar_path WHERE account = :account");
+    query.bindValue(":account", account);
+    query.bindValue(":nickname", nickname);
+    query.bindValue(":avatar_path", avatarPath);
+
+    if (query.exec()) {
+        qDebug() << "更新用户资料成功（账号：" << account << "）";
+        return true;
+    } else {
+        qWarning() << "更新用户资料失败:" << query.lastError().text();
         return false;
     }
 }

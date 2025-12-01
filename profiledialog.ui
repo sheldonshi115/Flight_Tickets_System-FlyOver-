@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ProfileDialog</class>
+ <widget class="QDialog" name="ProfileDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>500</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>个人资料</string>
+  </property>
+  <property name="fixedSize">
+   <size>
+    <width>400</width>
+    <height>500</height>
+   </size>
+  </property>
+  <property name="windowFlags">
+   <set>Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint</set>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QVBoxLayout" name="avatarLayout">
+     <property name="spacing">
+      <number>10</number>
+     </property>
+     <item alignment="Qt::AlignCenter">
+      <widget class="QLabel" name="lblAvatar">
+       <property name="minimumSize">
+        <size>
+         <width>140</width>
+         <height>140</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>140</width>
+         <height>140</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: #f0f0f0; border-radius: 70px; border: 1px solid #eee;</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item alignment="Qt::AlignCenter">
+      <widget class="QPushButton" name="btnChangeAvatar">
+       <property name="text">
+        <string>更换头像</string>
+       </property>
+       <property name="minimumWidth">
+        <number>80</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="accountLayout">
+     <property name="spacing">
+      <number>10</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="lblAccountLabel">
+       <property name="text">
+        <string>账号：</string>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px; color: #333; min-width: 60px; text-align: right;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="lblAccount">
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px; color: #666; background-color: #f9f9f9; padding: 6px 12px; border-radius: 4px; border: 1px solid #eee;</string>
+       </property>
+       <property name="minimumHeight">
+        <number>30</number>
+       </property>
+       <property name="minimumWidth">
+        <number>200</number>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeft | Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="nicknameLayout">
+     <property name="spacing">
+      <number>10</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="lblNicknameLabel">
+       <property name="text">
+        <string>昵称：</string>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px; color: #333; min-width: 60px; text-align: right;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="txtNickname">
+       <property name="minimumHeight">
+        <number>30</number>
+       </property>
+       <property name="minimumWidth">
+        <number>200</number>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-size: 14px; padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px;</string>
+       </property>
+       <property name="placeholderText">
+        <string>请输入昵称（1-16个字符）</string>
+       </property>
+       <property name="maxLength">
+        <number>16</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="buttonLayout">
+     <property name="spacing">
+      <number>30</number>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <item>
+      <widget class="QPushButton" name="btnSave">
+       <property name="text">
+        <string>保存</string>
+       </property>
+       <property name="minimumWidth">
+        <number>100</number>
+       </property>
+       <property name="minimumHeight">
+        <number>36</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnCancel">
+       <property name="text">
+        <string>取消</string>
+       </property>
+       <property name="minimumWidth">
+        <number>100</number>
+       </property>
+       <property name="minimumHeight">
+        <number>36</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/> <!-- 清空connections，由自动关联规则绑定槽函数 -->
+</ui>
