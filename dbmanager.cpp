@@ -344,3 +344,26 @@ bool DBManager::removeFlight(int flightId)
         return false;
     }
 }
+
+bool DBManager::addUser(const QString& account, const QString& password, const QString& role) {
+    if (!db.isOpen()) return false;
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO users (account, password, role) VALUES (:account, :password, :role)");
+    query.bindValue(":account", account);
+    query.bindValue(":password", password); // 实际项目需加密存储
+    query.bindValue(":role", role);
+    return query.exec();
+}
+
+bool DBManager::verifyUser(const QString& account, const QString& password, QString& role) {
+    if (!db.isOpen()) return false;
+    QSqlQuery query(db);
+    query.prepare("SELECT role FROM users WHERE account = :account AND password = :password");
+    query.bindValue(":account", account);
+    query.bindValue(":password", password);
+    if (query.exec() && query.next()) {
+        role = query.value("role").toString();
+        return true;
+    }
+    return false;
+}

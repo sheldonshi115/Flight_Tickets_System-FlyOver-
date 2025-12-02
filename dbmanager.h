@@ -38,6 +38,9 @@ public:
     bool addFlight(const Flight& flight);
     bool updateFlight(const Flight& flight);
     bool removeFlight(int flightId);
+
+    bool addUser(const QString& account, const QString& password, const QString& role = "user");
+    bool verifyUser(const QString& account, const QString& password, QString& role);
 };
 
 #endif // DBMANAGER_H
