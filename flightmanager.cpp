@@ -3,6 +3,7 @@
 #include "dbmanager.h"
 #include "flightdialog.h"
 #include <QMessageBox>
+#include <QStackedWidget>
 
 FlightManager::FlightManager(QWidget *parent) :
     QWidget(parent),
@@ -20,7 +21,15 @@ FlightManager::FlightManager(QWidget *parent) :
     connect(ui->btnAdd, &QPushButton::clicked, this, &FlightManager::onAddFlightClicked);
     connect(ui->btnSearch, &QPushButton::clicked, this, &FlightManager::onSearchFlightsClicked);
     connect(ui->btnRefresh, &QPushButton::clicked, this, &FlightManager::onRefreshClicked);
-    connect(ui->exitButton,&QPushButton::clicked,this,&FlightManager::onExitClicked);
+    // 原退出按钮逻辑修改：不再关闭窗口，而是通知主窗口返回主页
+    connect(ui->exitButton, &QPushButton::clicked, this, [this]() {
+        QWidget *mainWindow = this->topLevelWidget(); // 获取主窗口
+        QStackedWidget *stackedWidget = mainWindow->findChild<QStackedWidget*>("stackedWidget");
+        QWidget *pageHome = stackedWidget->findChild<QWidget*>("pageHome");
+        if (stackedWidget && pageHome) {
+            stackedWidget->setCurrentWidget(pageHome);
+        }
+    });
 }
 
 FlightManager::~FlightManager()
@@ -88,10 +97,6 @@ void FlightManager::onAddFlightClicked()
     }
 }
 
-void FlightManager::onExitClicked(){
-    this->close();
-}
-
 void FlightManager::onSearchFlightsClicked()
 {
     QString departure = ui->txtDeparture->text().trimmed(); // 去除首尾空格，避免空字符干扰
@@ -106,7 +111,6 @@ void FlightManager::onSearchFlightsClicked()
     if (selectedDate == ui->dateEdit->minimumDate()) {
         date = QDateTime(); // 设为无效QDateTime，跳过日期过滤
     }
-
     QList<Flight> results = DBManager::instance().findFlights(departure, arrival, date);
     loadFlightsToTable(results);
 }
@@ -114,4 +118,54 @@ void FlightManager::onSearchFlightsClicked()
 void FlightManager::onRefreshClicked()
 {
     loadFlightsToTable(DBManager::instance().getAllFlights());
+}
+
+void FlightManager::setAdminMode(bool isAdminMode)
+{
+    m_isAdminMode = isAdminMode;
+    // 管理员模式显示增删按钮，普通模式隐藏
+    ui->btnAdd->setVisible(isAdminMode);
+    ui->btnDelete->setVisible(isAdminMode);
+    // 普通模式下，“新增”按钮显示为“选择航班”
+    ui->btnAdd->setText(isAdminMode ? "新增航班" : "选择航班");
+}
+
+void FlightManager::on_btnDelete_clicked()
+{
+    QTableWidgetItem* selectedItem = ui->tableView->currentItem();
+    if (!selectedItem) {
+        QMessageBox::warning(this, "提示", "请先选择要删除的航班");
+        return;
+    }
+    int selectedRow = selectedItem->row();
+    // 假设表格第0列隐藏了航班ID（若实际列不同需调整）
+    int flightId = ui->tableView->item(selectedRow, 0)->text().toInt();
+
+    if (QMessageBox::question(this, "确认删除",
+                              QString("确定要删除选中的航班吗？"),
+                              QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+        return;
+    }
+
+    bool deleteSuccess = DBManager::instance().removeFlight(flightId);
+    if (deleteSuccess) {
+        QMessageBox::information(this, "成功", "航班删除成功");
+        onRefreshClicked();
+    } else {
+        QMessageBox::critical(this, "失败", "航班删除失败");
+    }
+}
+
+void FlightManager::on_exitButton_clicked()
+{
+    // 找到主窗口的stackedWidget，切换回主页
+    QWidget* mainWindow = this->topLevelWidget();
+    QStackedWidget* stackedWidget = mainWindow->findChild<QStackedWidget*>("stackedWidget");
+    QWidget* pageHome = stackedWidget->findChild<QWidget*>("pageHome");
+
+    if (stackedWidget && pageHome) {
+        stackedWidget->setCurrentWidget(pageHome);
+    } else {
+        QMessageBox::warning(this, "错误", "无法找到主页页面");
+    }
 }
