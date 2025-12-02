@@ -58,5 +58,4 @@ RESOURCES += resources/resources.qrc  # 若需添加图标，可在resources下�
 # }
 
 # 确保样式表文件被正确识别（可选）
-# RESOURCES += resources/resources.qrc
-# RESOURCES += resources/style.qss
+RESOURCES += resources/style.qss
