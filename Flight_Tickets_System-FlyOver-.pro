@@ -13,23 +13,27 @@ SOURCES += \
     register.cpp \
     login.cpp \
     mainwindow.cpp \
-    flightmanager.cpp
+    flightmanager.cpp \
+    views/travelmoment.cpp \
     # models/flight.cpp \
     # models/order.cpp \
-    # models/user.cpp
+    models/user.cpp
 
 # 头文件列表
 HEADERS += \
+    clickablelabel.h \
     dbmanager.h \
     flight.h \
     flightdialog.h \
     register.h \
     login.h \
     mainwindow.h \
-    flightmanager.h
+    flightmanager.h \
+    clickablelabel.h \
+    views/travelmoment.h \
     # models/flight.h \
     # models/order.h \
-    # models/user.h
+    models/user.h
 
 # UI界面文件
 FORMS += \
@@ -37,7 +41,8 @@ FORMS += \
     register.ui \
     login.ui \
     mainwindow.ui \
-    flightmanager.ui
+    flightmanager.ui \
+    views/travelmoment.ui
 
 # 资源文件（样式表、图标等）
 RESOURCES += resources/resources.qrc  # 若需添加图标，可在resources下创建icons目录并更新此处

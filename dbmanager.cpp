@@ -9,7 +9,7 @@
 const QString DBManager::DB_NAME = "flight_ticket_db";
 const QString DBManager::DB_HOST = "localhost";
 const QString DBManager::DB_USER = "root";
-const QString DBManager::DB_PWD = "pwd";
+const QString DBManager::DB_PWD = "Srt13141314@";
 const int DBManager::DB_PORT = 3306;
 
 // 单例模式：静态实例
@@ -50,6 +50,13 @@ void DBManager::insertTestFlights()
     }
 
     QSqlQuery query(db);
+    // 先检查是否有任何航班数据
+    query.exec("SELECT COUNT(*) FROM flights");
+    query.next();
+    if (query.value(0).toInt() > 0) {
+        qDebug() << "数据库已有航班数据，跳过插入测试数据";
+        return;  // 已有数据，不再插入
+    }
     query.prepare(R"(
         INSERT INTO flights (flight_num, departure, destination, depart_time, arrive_time, seat_count, price)
         VALUES (:flight_num, :departure, :destination, :depart_time, :arrive_time, :seat_count, :price)
@@ -336,4 +343,27 @@ bool DBManager::removeFlight(int flightId)
         qWarning() << "删除航班失败:" << query.lastError().text();
         return false;
     }
+}
+
+bool DBManager::addUser(const QString& account, const QString& password, const QString& role) {
+    if (!db.isOpen()) return false;
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO users (account, password, role) VALUES (:account, :password, :role)");
+    query.bindValue(":account", account);
+    query.bindValue(":password", password); // 实际项目需加密存储
+    query.bindValue(":role", role);
+    return query.exec();
+}
+
+bool DBManager::verifyUser(const QString& account, const QString& password, QString& role) {
+    if (!db.isOpen()) return false;
+    QSqlQuery query(db);
+    query.prepare("SELECT role FROM users WHERE account = :account AND password = :password");
+    query.bindValue(":account", account);
+    query.bindValue(":password", password);
+    if (query.exec() && query.next()) {
+        role = query.value("role").toString();
+        return true;
+    }
+    return false;
 }
