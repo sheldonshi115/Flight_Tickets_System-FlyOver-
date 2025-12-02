@@ -3,10 +3,19 @@
 #include "login.h"
 #include "dbmanager.h"
 #include <QApplication>
+#include <QFile>
 #include <QMessageBox.h>
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
+
+    // 加载全局样式表
+    QFile styleFile(":/resources/style.qss");
+    if (styleFile.open(QIODevice::ReadOnly)) {
+        QString style = styleFile.readAll();
+        a.setStyleSheet(style);
+        styleFile.close();
+    }
 
     // 初始化数据库（自动创建表）
     if (!DBManager::instance().initDatabase()) {

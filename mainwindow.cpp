@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "views/travelmoment.h"
+#include <QPropertyAnimation>
+#include <QEasingCurve>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
