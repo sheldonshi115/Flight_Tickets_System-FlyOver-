@@ -13,17 +13,12 @@
   <property name="windowTitle">
    <string>航班票务管理系统 - FlyOver</string>
   </property>
-  <!-- 中央部件：左侧导航 + 右侧滑动页面容器 -->
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="mainLayout">
     <item>
-     <!-- 左侧导航栏 -->
      <widget class="QFrame" name="sideBar">
       <property name="frameShape">
        <enum>QFrame::Shape::StyledPanel</enum>
-      </property>
-      <property name="minimumWidth">
-       <number>180</number>
       </property>
       <layout class="QVBoxLayout" name="sideLayout">
        <item>
@@ -39,80 +34,64 @@
          </property>
         </widget>
        </item>
-       <!-- 导航按钮（与滑动页面对应） -->
        <item>
         <widget class="QPushButton" name="btnHome">
-         <property name="text">
-          <string>🏠 主页</string>
-         </property>
          <property name="styleSheet">
           <string notr="true">text-align: left; padding: 12px 20px;</string>
+         </property>
+         <property name="text">
+          <string>🏠主       页</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="btnFlightQuery">
-         <property name="text">
-          <string>✈️ 航班查询</string>
-         </property>
          <property name="styleSheet">
           <string notr="true">text-align: left; padding: 12px 20px;</string>
+         </property>
+         <property name="text">
+          <string>✈️航班查询</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="travelbutton">
-         <property name="text">
-          <string>🌍 旅行动态</string>
-         </property>
          <property name="styleSheet">
           <string notr="true">text-align: left; padding: 12px 20px;</string>
+         </property>
+         <property name="text">
+          <string>🌍旅行动态</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="btnOrders">
-         <property name="text">
-          <string>🧾 订单管理</string>
-         </property>
          <property name="styleSheet">
           <string notr="true">text-align: left; padding: 12px 20px;</string>
+         </property>
+         <property name="text">
+          <string>🧾订单管理</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="btnProfile">
-         <property name="text">
-          <string>👤 我的信息</string>
-         </property>
          <property name="styleSheet">
           <string notr="true">text-align: left; padding: 12px 20px;</string>
          </property>
+         <property name="text">
+          <string>👤我的信息</string>
+         </property>
         </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Orientation::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
        </item>
       </layout>
      </widget>
     </item>
     <item>
-     <!-- 右侧滑动页面容器（QStackedWidget） -->
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="styleSheet">
        <string notr="true">background-color: #1e1e1e;</string>
       </property>
-      <!-- 页面 0：主页 -->
       <widget class="QWidget" name="pageHome">
        <layout class="QVBoxLayout" name="homeLayout">
         <item>
@@ -130,13 +109,9 @@
         </item>
        </layout>
       </widget>
-      <!-- 页面 1：航班查询（关联 FlightManager） -->
       <widget class="QWidget" name="pageFlights">
-       <layout class="QVBoxLayout" name="flightsLayout">
-        <!-- 此处将通过代码加载 FlightManager 控件 -->
-       </layout>
+       <layout class="QVBoxLayout" name="flightsLayout"/>
       </widget>
-      <!-- 页面 2：旅行动态 -->
       <widget class="QWidget" name="pageTravel">
        <layout class="QVBoxLayout" name="travelLayout">
         <item>
@@ -151,7 +126,6 @@
         </item>
        </layout>
       </widget>
-      <!-- 页面 3：订单管理 -->
       <widget class="QWidget" name="pageOrders">
        <layout class="QVBoxLayout" name="ordersLayout">
         <item>
@@ -166,7 +140,6 @@
         </item>
        </layout>
       </widget>
-      <!-- 页面 4：我的信息 -->
       <widget class="QWidget" name="pageProfile">
        <layout class="QVBoxLayout" name="profileLayout">
         <item>
@@ -185,14 +158,13 @@
     </item>
    </layout>
   </widget>
-  <!-- 菜单栏（保持不变） -->
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFlights">

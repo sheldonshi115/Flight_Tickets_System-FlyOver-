@@ -92,7 +92,7 @@
       <item>
        <widget class="QPushButton" name="btnRefresh">
         <property name="text">
-         <string>重置</string>
+         <string>刷新</string>
         </property>
        </widget>
       </item>
@@ -174,16 +174,9 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="btnAdd">
+      <widget class="QPushButton" name="pushButton">
        <property name="text">
-        <string>新增航班</string> <!-- 原“选择航班”改为“新增航班”，区分功能 -->
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btnDelete"> <!-- 新增删除按钮 -->
-       <property name="text">
-        <string>删除航班</string>
+        <string>购票</string>
        </property>
       </widget>
      </item>
