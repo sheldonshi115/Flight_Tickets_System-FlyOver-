@@ -18,7 +18,7 @@ FlightManager::FlightManager(QWidget *parent) :
     ui->dateEdit->setDate(currentDate);
     ui->dateEdit->setMinimumDate(currentDate);
     ui->dateEdit->setMaximumDate(endDate);
-    connect(ui->btnAdd, &QPushButton::clicked, this, &FlightManager::onAddFlightClicked);
+    //connect(ui->btnAdd, &QPushButton::clicked, this, &FlightManager::onAddFlightClicked);
     connect(ui->btnSearch, &QPushButton::clicked, this, &FlightManager::onSearchFlightsClicked);
     connect(ui->btnRefresh, &QPushButton::clicked, this, &FlightManager::onRefreshClicked);
     // 原退出按钮逻辑修改：不再关闭窗口，而是通知主窗口返回主页
@@ -124,10 +124,10 @@ void FlightManager::setAdminMode(bool isAdminMode)
 {
     m_isAdminMode = isAdminMode;
     // 管理员模式显示增删按钮，普通模式隐藏
-    ui->btnAdd->setVisible(isAdminMode);
-    ui->btnDelete->setVisible(isAdminMode);
+    //ui->btnAdd->setVisible(isAdminMode);
+    //ui->btnDelete->setVisible(isAdminMode);
     // 普通模式下，“新增”按钮显示为“选择航班”
-    ui->btnAdd->setText(isAdminMode ? "新增航班" : "选择航班");
+    //ui->btnAdd->setText(isAdminMode ? "新增航班" : "选择航班");
 }
 
 void FlightManager::on_btnDelete_clicked()
