@@ -1,0 +1,7 @@
+torch==2.5.1+cu121
+fastapi
+uvicorn
+transformers
+pydantic
+bitsandbytes
+accelerate

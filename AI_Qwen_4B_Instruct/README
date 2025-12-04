@@ -1,0 +1,3 @@
+需要先执行pip install -r requirements
+修改代码中的MYSQL config 修改密码
+执行时执行python3 main.py文件进行
