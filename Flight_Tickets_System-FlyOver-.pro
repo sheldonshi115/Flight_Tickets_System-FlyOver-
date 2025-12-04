@@ -14,6 +14,7 @@ SOURCES += \
     login.cpp \
     mainwindow.cpp \
     flightmanager.cpp \
+    seatdialog.cpp \
     views/travelmoment.cpp \
     # models/flight.cpp \
     # models/order.cpp \
@@ -30,6 +31,7 @@ HEADERS += \
     mainwindow.h \
     flightmanager.h \
     clickablelabel.h \
+    seatdialog.h \
     views/travelmoment.h \
     # models/flight.h \
     # models/order.h \
@@ -42,6 +44,7 @@ FORMS += \
     login.ui \
     mainwindow.ui \
     flightmanager.ui \
+    seatdialog.ui \
     views/travelmoment.ui
 
 # 资源文件（样式表、图标等）

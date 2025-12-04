@@ -1,9 +1,11 @@
+// flightmanager.h
 #ifndef FLIGHTMANAGER_H
 #define FLIGHTMANAGER_H
+
 #include <QWidget>
-#include <QDateTime>
-#include "flight.h"
-#include "dbmanager.h"
+#include <QTableWidgetItem>
+#include <QList>
+#include "flight.h" // 包含 Flight 数据结构
 
 namespace Ui {
 class FlightManager;
@@ -16,22 +18,32 @@ class FlightManager : public QWidget
 public:
     explicit FlightManager(QWidget *parent = nullptr);
     ~FlightManager();
+
+    // 您代码中使用的公共/私有方法声明
+    void setupTableView();
+    void loadFlightsToTable(const QList<Flight>& flights);
+    Flight getSelectedFlight();
     void setAdminMode(bool isAdminMode);
 
 private slots:
-    void onAddFlightClicked();       // 新增航班按钮
-    void onSearchFlightsClicked();   // 查询按钮
-    void onRefreshClicked();         // 重置按钮
-    void on_btnDelete_clicked();     // 删除按钮
-    void on_exitButton_clicked();    // 退出按钮
+    // --- 手动 connect 的槽函数 ---
+    void onAddFlightClicked();
+    void onBookTicketClicked();
+    void onEditFlightClicked();
+    void onSearchFlightsClicked();
+    void onSelectSeatClicked();
+    void onRefreshClicked();
+
+    // --- 自动关联槽函数 (如果存在) ---
+    void on_twFlightList_itemSelectionChanged(); // 表格选择变化
+
+    // --- 按钮槽函数 (删除、退出) ---
+    void on_btnDelete_clicked();
+    void on_btnExit_clicked();
 
 private:
     Ui::FlightManager *ui;
-    bool m_isAdminMode;
-    void setupTableView();           // 初始化表格视图
-    void loadFlightsToTable(const QList<Flight>& flights); // 加载数据到表格
-    Flight getSelectedFlight();      // 获取选中的航班
-    bool deleteFlightFromDB(const QString& flightNumber);  // 从数据库删除航班
+    bool m_isAdminMode = false; // 用于 setAdminMode
 };
 
 #endif // FLIGHTMANAGER_H

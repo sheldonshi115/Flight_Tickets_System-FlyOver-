@@ -5,43 +5,40 @@
 #include <QDebug>
 #include <ctime>
 #include <cstdlib>
-// 初始化静态常量
+
+// ==== 修改这里的数据库配置为你的本地数据库信息 ====
 const QString DBManager::DB_NAME = "flight_ticket_db";
 const QString DBManager::DB_HOST = "localhost";
-const QString DBManager::DB_USER = "root";
-const QString DBManager::DB_PWD = "Srt13141314@";
-const int DBManager::DB_PORT = 3306;
+const QString DBManager::DB_USER = "root";       // 替换为你的MySQL用户名
+const QString DBManager::DB_PWD = "Srt13141314@"; // 替换为你的MySQL密码
+const int DBManager::DB_PORT = 3306;             // 通常默认是3306，如有修改请调整
+// ==============================================
 
-// 单例模式：静态实例
 DBManager& DBManager::instance()
 {
     static DBManager instance;
     return instance;
 }
 
-// 私有构造函数：初始化数据库连接
 DBManager::DBManager(QObject *parent) : QObject(parent)
 {
-    // 避免重复创建连接
     if (QSqlDatabase::contains("flight_conn")) {
         db = QSqlDatabase::database("flight_conn");
     } else {
-        // 创建MySQL连接
         db = QSqlDatabase::addDatabase("QODBC", "flight_conn");
         db.setDatabaseName(QString("DRIVER={MySQL ODBC 8.0 ANSI Driver};SERVER=%1;DATABASE=%2;UID=%3;PWD=%4;PORT=%5;")
                                .arg(DB_HOST).arg(DB_NAME).arg(DB_USER).arg(DB_PWD).arg(DB_PORT));
-        // 注意：你需要确保系统安装了对应版本的MySQL ODBC驱动，并在上面的字符串中正确指定
 
-        // 尝试打开连接
         if (!db.open()) {
             QMessageBox::critical(nullptr, "数据库连接失败",
                                   "错误信息：" + db.lastError().text());
         } else {
             qDebug() << "数据库连接成功！";
-            initDatabase(); // 自动初始化数据库表
+            initDatabase();
         }
     }
 }
+
 void DBManager::insertTestFlights()
 {
     if (!db.isOpen()) {
@@ -50,20 +47,18 @@ void DBManager::insertTestFlights()
     }
 
     QSqlQuery query(db);
-    // 先检查是否有任何航班数据
     query.exec("SELECT COUNT(*) FROM flights");
     query.next();
     if (query.value(0).toInt() > 0) {
         qDebug() << "数据库已有航班数据，跳过插入测试数据";
-        return;  // 已有数据，不再插入
+        return;
     }
     query.prepare(R"(
-        INSERT INTO flights (flight_num, departure, destination, depart_time, arrive_time, seat_count, price)
-        VALUES (:flight_num, :departure, :destination, :depart_time, :arrive_time, :seat_count, :price)
+        INSERT INTO flights (flight_num, departure, destination, depart_time, arrive_time, seat_count, available_seats, price)
+        VALUES (:flight_num, :departure, :destination, :depart_time, :arrive_time, :seat_count, :available_seats, :price)
     )");
 
-    // 修正1：使用 C++ 标准库的 srand 初始化随机数种子（替换 qsrand）
-    srand((unsigned int)time(nullptr)); // 用系统时间做种子，确保每次启动数据不同
+    srand((unsigned int)time(nullptr));
 
     QStringList departureCities = {
         "北京", "上海", "广州", "深圳", "成都", "杭州", "西安", "重庆",
@@ -75,21 +70,17 @@ void DBManager::insertTestFlights()
         "南京", "青岛", "厦门", "三亚", "昆明", "大连", "哈尔滨", "乌鲁木齐","常州", "海南", "苏州", "桂林"
     };
 
-    // 先定义需要的航班前缀列表（可根据需求添加/删除）
     QStringList flightPrefixes = {
         "MU", "CA", "CZ", "FM", "HU",
         "MF", "SC", "3U", "ZH", "HO",
         "9C", "SQ", "TG", "JL", "NH"
     };
 
-    // 循环生成5000条航班数据（可调整循环次数）
     for (int i = 0; i < 10000; ++i) {
-        // 1. 多前缀+唯一航班号（前缀随机选择，数字001~999循环）
-        QString prefix = flightPrefixes[rand() % flightPrefixes.size()]; // 随机选前缀
-        int num = (i % 999) + 1; // 数字部分001~999循环（保证同前缀内唯一，跨前缀可重复数字但整体航班号唯一）
+        QString prefix = flightPrefixes[rand() % flightPrefixes.size()];
+        int num = (i % 999) + 1;
         QString flightNum = QString("%1%2").arg(prefix).arg(num, 3, 10, QChar('0'));
 
-        // 2. 随机出发地和目的地（避免相同）
         int depIdx = rand() % departureCities.size();
         int arrIdx;
         do {
@@ -98,39 +89,33 @@ void DBManager::insertTestFlights()
         QString departure = departureCities[depIdx];
         QString destination = arrivalCities[arrIdx];
 
-        // 3. 随机出发时间（当前时间往后1~30天，随机小时/分钟）
         QDateTime departTime = QDateTime::currentDateTime();
-        departTime = departTime.addDays(rand() % 30) // 0~29天（即1~30天后，原逻辑不变）
-                         .addSecs((rand() % 24) * 3600) // 0~23小时
-                         .addSecs((rand() % 60) * 60);  // 0~59分钟
+        departTime = departTime.addDays(rand() % 30)
+                         .addSecs((rand() % 24) * 3600)
+                         .addSecs((rand() % 60) * 60);
 
-        // 4. 随机到达时间（出发后1~5小时，随机分钟）
         QDateTime arriveTime = departTime;
-        arriveTime = arriveTime.addSecs((1 + rand() % 5) * 3600) // 1~5小时
-                         .addSecs((rand() % 60) * 60);    // 0~59分钟
+        arriveTime = arriveTime.addSecs((1 + rand() % 5) * 3600)
+                         .addSecs((rand() % 60) * 60);
 
-        // 5. 随机座位数（150~300座）
         int seatCount = 150 + rand() % 151;
+        double price = (int)(600.00 + (rand() % 190001) / 100.0);
 
-        // 6. 随机票价（600.00~2500.00元，优化计算逻辑更简洁）
-        double price = (int)(600.00 + (rand() % 190001) / 100.0); // 190001 → 0~190000，除以100得0.00~1900.00，总600~2500
-
-        // 绑定参数
         query.bindValue(":flight_num", flightNum);
         query.bindValue(":departure", departure);
         query.bindValue(":destination", destination);
         query.bindValue(":depart_time", departTime);
         query.bindValue(":arrive_time", arriveTime);
         query.bindValue(":seat_count", seatCount);
+        query.bindValue(":available_seats", seatCount);
         query.bindValue(":price", price);
 
-        // 执行插入
         if (!query.exec()) {
             qWarning() << "插入测试航班失败（序号" << i << "，航班号" << flightNum << "）:" << query.lastError().text();
         }
     }
 }
-// 初始化数据库表
+
 bool DBManager::initDatabase()
 {
     if (!db.isOpen()) return false;
@@ -153,10 +138,11 @@ bool DBManager::initDatabase()
             depart_time DATETIME NOT NULL,
             arrive_time DATETIME NOT NULL,
             seat_count INT NOT NULL,
+            available_seats INT NOT NULL,
             price DECIMAL(10,2) NOT NULL
         )
     )";
-    // 执行建表语句
+
     if(query.exec(createUsers) && query.exec(createFlights)) {
         qDebug() << "数据表检查/创建成功。";
         if(query.exec("SELECT COUNT(*) FROM flights")&&query.next()){
@@ -165,7 +151,7 @@ bool DBManager::initDatabase()
                 insertTestFlights();
                 qDebug()<<"已在表中插入了10000条初始航班数据!";
             }else{
-                qDebug()<<"flights 已有10000条";
+                qDebug()<<"flights 已有10000条数据";
             }
         }else{
             qWarning()<<"查询航班表数据失败"<<query.lastError().text();
@@ -177,14 +163,13 @@ bool DBManager::initDatabase()
     }
 }
 
-// 获取所有航班
 QList<Flight> DBManager::getAllFlights()
 {
     QList<Flight> flights;
     if (!db.isOpen()) return flights;
 
     QSqlQuery query(db);
-    if (query.exec("SELECT id, flight_num, departure, destination, depart_time, arrive_time, seat_count, price FROM flights ORDER BY depart_time")) {
+    if (query.exec("SELECT id, flight_num, departure, destination, depart_time, arrive_time, seat_count, available_seats, price FROM flights ORDER BY depart_time")) {
         while (query.next()) {
             Flight flight;
             flight.setId(query.value("id").toInt());
@@ -194,11 +179,8 @@ QList<Flight> DBManager::getAllFlights()
             flight.setDepartureTime(query.value("depart_time").toDateTime());
             flight.setArrivalTime(query.value("arrive_time").toDateTime());
             flight.setTotalSeats(query.value("seat_count").toInt());
+            flight.setAvailableSeats(query.value("available_seats").toInt());
             flight.setPrice(query.value("price").toDouble());
-            // availableSeats 在数据库中没有字段，这里可以根据业务逻辑计算，
-            // 例如：可用座位 = 总座位 - 已售出座位(需要查询orders表)
-            // 为简化，这里暂时设为总座位
-            flight.setAvailableSeats(query.value("seat_count").toInt());
 
             flights.append(flight);
         }
@@ -208,13 +190,12 @@ QList<Flight> DBManager::getAllFlights()
     return flights;
 }
 
-// 查找航班
 QList<Flight> DBManager::findFlights(const QString& departure, const QString& arrival, const QDateTime& date)
 {
     QList<Flight> flights;
     if (!db.isOpen()) return flights;
 
-    QString sql = "SELECT id, flight_num, departure, destination, depart_time, arrive_time, seat_count, price FROM flights WHERE 1=1";
+    QString sql = "SELECT id, flight_num, departure, destination, depart_time, arrive_time, seat_count, available_seats, price FROM flights WHERE 1=1";
     if (!departure.isEmpty()) {
         sql += " AND departure LIKE :departure";
     }
@@ -248,8 +229,8 @@ QList<Flight> DBManager::findFlights(const QString& departure, const QString& ar
             flight.setDepartureTime(query.value("depart_time").toDateTime());
             flight.setArrivalTime(query.value("arrive_time").toDateTime());
             flight.setTotalSeats(query.value("seat_count").toInt());
+            flight.setAvailableSeats(query.value("available_seats").toInt());
             flight.setPrice(query.value("price").toDouble());
-            flight.setAvailableSeats(query.value("seat_count").toInt()); // 同样，这里是简化处理
 
             flights.append(flight);
         }
@@ -259,14 +240,13 @@ QList<Flight> DBManager::findFlights(const QString& departure, const QString& ar
     return flights;
 }
 
-// 添加航班
 bool DBManager::addFlight(const Flight& flight)
 {
     if (!db.isOpen()) return false;
 
     QString sql = R"(
-        INSERT INTO flights (flight_num, departure, destination, depart_time, arrive_time, seat_count, price)
-        VALUES (:flight_num, :departure, :destination, :depart_time, :arrive_time, :seat_count, :price)
+        INSERT INTO flights (flight_num, departure, destination, depart_time, arrive_time, seat_count, available_seats, price)
+        VALUES (:flight_num, :departure, :destination, :depart_time, :arrive_time, :seat_count, :available_seats, :price)
     )";
 
     QSqlQuery query(db);
@@ -277,6 +257,7 @@ bool DBManager::addFlight(const Flight& flight)
     query.bindValue(":depart_time", flight.departureTime());
     query.bindValue(":arrive_time", flight.arrivalTime());
     query.bindValue(":seat_count", flight.totalSeats());
+    query.bindValue(":available_seats", flight.availableSeats());
     query.bindValue(":price", flight.price());
 
     if (query.exec()) {
@@ -288,7 +269,6 @@ bool DBManager::addFlight(const Flight& flight)
     }
 }
 
-// 更新航班
 bool DBManager::updateFlight(const Flight& flight)
 {
     if (!db.isOpen() || flight.id() == 0) return false;
@@ -301,6 +281,7 @@ bool DBManager::updateFlight(const Flight& flight)
         depart_time = :depart_time,
         arrive_time = :arrive_time,
         seat_count = :seat_count,
+        available_seats = :available_seats,
         price = :price
         WHERE id = :id
     )";
@@ -313,6 +294,7 @@ bool DBManager::updateFlight(const Flight& flight)
     query.bindValue(":depart_time", flight.departureTime());
     query.bindValue(":arrive_time", flight.arrivalTime());
     query.bindValue(":seat_count", flight.totalSeats());
+    query.bindValue(":available_seats", flight.availableSeats());
     query.bindValue(":price", flight.price());
     query.bindValue(":id", flight.id());
 
@@ -325,7 +307,6 @@ bool DBManager::updateFlight(const Flight& flight)
     }
 }
 
-// 删除航班
 bool DBManager::removeFlight(int flightId)
 {
     if (!db.isOpen() || flightId == 0) return false;
@@ -350,7 +331,7 @@ bool DBManager::addUser(const QString& account, const QString& password, const Q
     QSqlQuery query(db);
     query.prepare("INSERT INTO users (account, password, role) VALUES (:account, :password, :role)");
     query.bindValue(":account", account);
-    query.bindValue(":password", password); // 实际项目需加密存储
+    query.bindValue(":password", password);
     query.bindValue(":role", role);
     return query.exec();
 }
