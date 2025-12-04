@@ -84,6 +84,16 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QPushButton" name="btnAIService">
+         <property name="styleSheet">
+          <string notr="true">text-align: left; padding: 12px 20px;</string>
+         </property>
+         <property name="text">
+          <string>💬  AI 客服</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>
@@ -164,7 +174,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFlights">
