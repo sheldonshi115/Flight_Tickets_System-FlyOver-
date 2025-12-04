@@ -15,6 +15,7 @@ SOURCES += \
     mainwindow.cpp \
     flightmanager.cpp \
     seatdialog.cpp \
+    ai.cpp \
     views/travelmoment.cpp \
     # models/flight.cpp \
     # models/order.cpp \
@@ -32,6 +33,7 @@ HEADERS += \
     flightmanager.h \
     clickablelabel.h \
     seatdialog.h \
+    ai.h \
     views/travelmoment.h \
     # models/flight.h \
     # models/order.h \
@@ -45,10 +47,16 @@ FORMS += \
     mainwindow.ui \
     flightmanager.ui \
     seatdialog.ui \
+    ai.ui \
+    profileDisplaydialog.ui \
+    profileRefreshdialog.ui \
     views/travelmoment.ui
 
 # 资源文件（样式表、图标等）
-RESOURCES += resources/resources.qrc  # 若需添加图标，可在resources下创建icons目录并更新此处
+RESOURCES += resources/resources.qrc \ # 若需添加图标，可在resources下创建icons目录并更新此处
+             resources/icons \
+             resources/images \
+             resources/text \
 
 # 数据库驱动配置（确保MySQL连接）
 # QT += sql

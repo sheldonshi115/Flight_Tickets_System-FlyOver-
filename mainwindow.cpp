@@ -3,25 +3,30 @@
 #include "views/travelmoment.h"
 #include <QPropertyAnimation>
 #include <QEasingCurve>
-
+#include "ai.h"
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_flightManager(nullptr), // 初始化指针
+    m_aiquery(nullptr),
     m_isAdmin(false) // 默认非管理员，实际应从登录信息获取
 {
     ui->setupUi(this);
-    connect(ui->travelbutton, &QPushButton::clicked, this, &MainWindow::onTravelButtonClicked);
+
     connect(ui->btnHome, &QPushButton::clicked, this, [this]() {
         ui->stackedWidget->setCurrentWidget(ui->pageHome); // 主页返回逻辑（保留）
     });
     // 绑定左侧“航班查询”按钮
+    connect(ui->travelbutton, &QPushButton::clicked, this, &MainWindow::onTravelButtonClicked);
     connect(ui->btnFlightQuery, &QPushButton::clicked, this, &MainWindow::on_btnFlightQuery_clicked);
     setWindowTitle("航班票务系统 - 主菜单");
 
     setIsAdmin(true);
 }
-
+void MainWindow::on_btnAIService_clicked(){
+    AIQueryWidget *aiq = new AIQueryWidget(nullptr);
+    aiq->show();
+}
 MainWindow::~MainWindow()
 {
     delete ui;
