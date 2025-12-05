@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/resources">
+        <!-- 其他资源... -->
+        <file>style.qss</file>   <!-- 👈 新增这一行 -->
+    </qresource>
+</RCC>

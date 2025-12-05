@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FlightManager</class>
+ <widget class="QWidget" name="FlightManager">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1024</width>
+    <height>720</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>航班管理系统</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#FlightManager {
+    background-color: #F5F5F5;
+}
+QTableWidget#twFlightList {
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #E0E0E0;
+}
+QGroupBox#gbDetails {
+    background-color: white;
+    border-radius: 8px;
+    border: 2px solid #E3F2FD;
+}</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>10</number>
+   </property>
+   <property name="leftMargin">
+    <number>15</number>
+   </property>
+   <property name="topMargin">
+    <number>15</number>
+   </property>
+   <property name="rightMargin">
+    <number>15</number>
+   </property>
+   <property name="bottomMargin">
+    <number>15</number>
+   </property>
+
+   <item>
+    <widget class="QWidget" name="widgetQuery" native="true">
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="lblDeparture">
+        <property name="text">
+         <string>出发城市:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="leDeparture">
+        <property name="placeholderText">
+         <string>例如：北京</string>
+        </property>
+        <property name="clearButtonEnabled">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblArrival">
+        <property name="text">
+         <string>到达城市:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="leArrival">
+        <property name="placeholderText">
+         <string>例如：上海</string>
+        </property>
+        <property name="clearButtonEnabled">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblDate">
+        <property name="text">
+         <string>出发日期:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDateEdit" name="deDate">
+        <property name="displayFormat">
+         <string>yyyy-MM-dd</string>
+        </property>
+        <property name="calendarPopup">
+         <bool>true</bool>
+        </property>
+        <property name="date">
+         <date>
+          <year>2023</year>
+          <month>1</month>
+          <day>1</day>
+         </date>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnSearch">
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #1E88E5;
+    color: white;
+    border-radius: 4px;
+    padding: 5px 15px;
+    border: none;
+}
+QPushButton:hover {
+    background-color: #1976D2;
+}
+QPushButton:pressed {
+    background-color: #0D47A1;
+}</string>
+        </property>
+        <property name="text">
+         <string>查询</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnRefresh">
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="text">
+         <string>重置</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_Query">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <item>
+    <widget class="QTableWidget" name="twFlightList">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="alternatingRowColors">
+      <bool>true</bool>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SingleSelection</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>true</bool>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>航班号</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>航空公司</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>起飞时间</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>到达时间</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>起飞机场</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>到达机场</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>票价</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>状态</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+
+   <item>
+    <widget class="QGroupBox" name="gbDetails">
+     <property name="title">
+      <string>航班详情信息</string>
+     </property>
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="lblTitleFlightNo">
+        <property name="styleSheet">
+         <string notr="true">color: #666;</string>
+        </property>
+        <property name="text">
+         <string>航班号：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="valFlightNo">
+        <property name="font">
+         <font>
+          <bold>true</bold>
+          <weight>75</weight>
+         </font>
+        </property>
+        <property name="text">
+         <string>--</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="lblTitleAirline">
+        <property name="styleSheet">
+         <string notr="true">color: #666;</string>
+        </property>
+        <property name="text">
+         <string>航空公司：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="valAirline">
+        <property name="text">
+         <string>--</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="lblTitleDepart">
+        <property name="styleSheet">
+         <string notr="true">color: #666;</string>
+        </property>
+        <property name="text">
+         <string>起飞时间：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="valDepart">
+        <property name="text">
+         <string>--</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="lblTitleArrive">
+        <property name="styleSheet">
+         <string notr="true">color: #666;</string>
+        </property>
+        <property name="text">
+         <string>到达时间：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QLabel" name="valArrive">
+        <property name="text">
+         <string>--</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="lblTitleGate">
+        <property name="styleSheet">
+         <string notr="true">color: #666;</string>
+        </property>
+        <property name="text">
+         <string>登机口：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="valGate">
+        <property name="text">
+         <string>待定</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="lblTitlePlane">
+        <property name="styleSheet">
+         <string notr="true">color: #666;</string>
+        </property>
+        <property name="text">
+         <string>机型：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QLabel" name="valPlane">
+        <property name="text">
+         <string>Airbus A330</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <item>
+    <widget class="QWidget" name="widgetBottom" native="true">
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QPushButton" name="btnAdd">
+        <property name="visible">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: #FF9800; color: white; border-radius: 4px; padding: 6px;</string>
+        </property>
+        <property name="text">
+         <string>新增航班</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnEdit">
+        <property name="visible">
+         <bool>false</bool>
+        </property>
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: #FFC107; color: black; border-radius: 4px; padding: 6px;</string>
+        </property>
+        <property name="text">
+         <string>编辑航班</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnDelete">
+        <property name="visible">
+         <bool>false</bool>
+        </property>
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: #F44336; color: white; border-radius: 4px; padding: 6px;</string>
+        </property>
+        <property name="text">
+         <string>删除航班</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_Buttons">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <!-- 新增购票按钮 -->
+      <item>
+       <widget class="QPushButton" name="btnBook">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton#btnBook {
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4CAF50, stop:1 #388E3C);
+    color: white;
+    border-radius: 6px;
+    padding: 8px 15px;
+    font-size: 14px;
+    font-weight: bold;
+    border: 2px solid #2E7D32;
+}
+QPushButton#btnBook:hover {
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #66BB6A, stop:1 #4CAF50);
+    border-color: #388E3C;
+}
+QPushButton#btnBook:disabled {
+    background-color: #C8E6C9;
+    color: #81C784;
+    border-color: #A5D6A7;
+}</string>
+        </property>
+        <property name="text">
+         <string>购票</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnSeat">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton#btnSeat {
+    border-radius: 6px;
+    padding: 8px 15px;
+    font-size: 14px;
+    background-color: #E3F2FD;
+    color: #1976D2;
+    border: 1px solid #BBDEFB;
+}
+QPushButton#btnSeat:hover {
+    background-color: #BBDEFB;
+}
+QPushButton#btnSeat:disabled {
+    background-color: #F5F5F5;
+    color: #BDBDBD;
+}</string>
+        </property>
+        <property name="text">
+         <string>查看座位</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnExit">
+        <property name="styleSheet">
+         <string notr="true">QPushButton#btnExit {
+    border-radius: 6px;
+    padding: 8px 15px;
+    font-size: 14px;
+    background-color: #F5F5F5;
+    color: #616161;
+    border: 1px solid #BDBDBD;
+}
+QPushButton#btnExit:hover {
+    background-color: #E0E0E0;
+}</string>
+        </property>
+        <property name="text">
+         <string>返回主页</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
