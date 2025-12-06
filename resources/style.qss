@@ -1,72 +1,73 @@
 /* =============== 全局基础 =============== */
 QWidget {
-    background-color: #1e1e1e;
-    color: #f0f0f0;
+    background-color: #f8f8f8; /* 浅色全局背景（核心修改） */
+    color: #333333; /* 深色文字，保证可读性 */
     font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
     font-size: 10pt;
 }
 
 /* =============== 按钮 =============== */
 QPushButton {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.05); /* 浅色按钮默认背景 */
     border: none;
-    color: white;
+    color: #333333; /* 按钮文字深色 */
     padding: 8px 16px;
     border-radius: 10px;
     min-width: 70px;
 }
 
 QPushButton:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(0, 0, 0, 0.1); /* 鼠标悬浮背景（加深一点） */
 }
 
 QPushButton:pressed {
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(0, 0, 0, 0.15); /* 鼠标按下背景（再加深） */
 }
 
 /* =============== 输入框 =============== */
 QLineEdit, QComboBox {
-    background-color: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: #ffffff; /* 纯白输入框背景 */
+    border: 1px solid rgba(0, 0, 0, 0.15); /* 浅灰色边框 */
     border-radius: 8px;
     padding: 6px;
-    color: white;
+    color: #333333; /* 输入框文字深色 */
 }
 
 /* =============== 表格 =============== */
 QTableWidget {
-    background-color: rgba(30, 30, 30, 0.95);
-    gridline-color: rgba(255, 255, 255, 0.1);
-    alternate-background-color: rgba(40, 40, 40, 0.5);
+    background-color: #ffffff; /* 表格主体纯白背景 */
+    gridline-color: rgba(0, 0, 0, 0.1); /* 浅灰色网格线 */
+    alternate-background-color: rgba(245, 245, 245, 0.8); /* 交替行浅灰背景 */
     border: none;
 }
 
 QHeaderView::section {
-    background-color: rgba(40, 40, 40, 0.8);
-    color: white;
+    background-color: rgba(240, 240, 240, 0.8); /* 表头浅灰背景 */
+    color: #333333; /* 表头文字深色 */
     padding: 6px;
     border: none;
 }
 
 /* 表格网格线与内容优化 */
 QTableWidget {
-    border: 1px solid rgba(255, 255, 255, 0.15); /* 表格外边框 */
+    border: 1px solid rgba(0, 0, 0, 0.15); /* 表格浅灰色外边框 */
     border-radius: 8px; /* 表格圆角 */
     padding: 5px;
 }
 
 QTableWidget::item {
-    padding: 6px 10px; /* 单元格内边距，避免文字贴边 */
+    padding: 6px 10px; /* 单元格内边距 */
     border: none;
 }
 
 QHeaderView::section {
-    border-right: 1px solid rgba(255, 255, 255, 0.1); /* 表头列分隔线 */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* 表头底部线 */
+    border-right: 1px solid rgba(0, 0, 0, 0.1); /* 表头列浅灰分隔线 */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* 表头底部浅灰线 */
     padding: 8px 10px; /* 表头文字内边距 */
 }
 
-/* 选中行样式优化 */
+/* 选中行样式优化（浅色下清晰可见） */
 QTableWidget::item:selected {
-    background-color: rgba(0, 120, 215, 0.3); /* 选中行背景色，增强对比 */
+    background-color: rgba(0, 120, 215, 0.2); /* 选中行浅蓝背景，保证对比 */
+    color: #333333; /* 选中行文字仍为深色 */
 }

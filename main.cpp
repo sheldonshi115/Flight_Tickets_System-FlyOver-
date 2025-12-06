@@ -23,13 +23,19 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    // 显示登录界面
-    LoginDialog login;
-    if (login.exec() != QDialog::Accepted) {
+    // 关键1：初始登录窗口改为堆对象（模态显示，保留原有体验）
+    LoginDialog *loginDialog = new LoginDialog();
+    loginDialog->setAttribute(Qt::WA_DeleteOnClose); // 关闭时自动释放内存
+    // 初始登录用exec()（模态），登录成功后再创建主窗口
+    if (loginDialog->exec() != QDialog::Accepted) {
+        delete loginDialog; // 未登录成功，手动释放
         return 0;
     }
 
-    MainWindow w;
-    w.show();
+    // 关键2：主窗口改为堆对象（避免栈对象生命周期问题）
+    MainWindow *mainWindow = new MainWindow();
+    mainWindow->setAttribute(Qt::WA_DeleteOnClose);
+    mainWindow->show();
+
     return a.exec();
 }

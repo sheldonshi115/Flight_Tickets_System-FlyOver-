@@ -100,7 +100,7 @@
     <item>
      <widget class="QStackedWidget" name="stackedWidget">
       <property name="styleSheet">
-       <string notr="true">background-color: #1e1e1e;</string>
+       <string notr="true">background-color: #e8e8e8;</string>
       </property>
       <widget class="QWidget" name="pageHome">
        <layout class="QVBoxLayout" name="homeLayout">

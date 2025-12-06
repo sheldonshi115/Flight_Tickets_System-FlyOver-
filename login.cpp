@@ -1,6 +1,7 @@
 #include "login.h"
 #include "ui_login.h"
 #include "dbmanager.h" // 引入DBManager
+#include "mainwindow.h"
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QMessageBox>
@@ -56,7 +57,19 @@ void LoginDialog::on_loginButton_clicked()
     if (query.next()) {
         if (query.value(0).toString() == password) {
             QMessageBox::information(this, "成功", "登录成功！");
-            accept();
+
+            // 关键：判断当前登录窗口是“初始模态”还是“退出后非模态”
+            if (this->parent() == nullptr && this->isModal()) {
+                // 情况1：初始登录（模态，无父对象）→ 用accept()适配main.cpp的exec()
+                this->accept();
+            } else {
+                // 情况2：退出后重新登录（非模态）→ 创建堆主窗口，延迟关闭登录窗口
+                MainWindow *mainWin = new MainWindow();
+                mainWin->setAttribute(Qt::WA_DeleteOnClose);
+                mainWin->show();
+
+                QTimer::singleShot(100, this, &LoginDialog::close);
+            }
         } else {
             QMessageBox::warning(this, "失败", "密码错误！");
         }

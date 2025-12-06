@@ -33,6 +33,8 @@ private slots:
     void on_btnFlightQuery_clicked();
     void on_btnAIService_clicked();
     void on_btnOrderManager_clicked();
+    void on_actionLogout_triggered();
+    void on_actionAbout_triggered();
 
 };
 #endif // MAINWINDOW_H
