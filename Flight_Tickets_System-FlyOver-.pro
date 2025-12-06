@@ -17,6 +17,9 @@ SOURCES += \
     seatdialog.cpp \
     ai.cpp \
     views/travelmoment.cpp \
+    ticketbooking.cpp \
+    ordermanagement.cpp \
+    dataanalyticswidget.cpp \
     # models/flight.cpp \
     # models/order.cpp \
     models/user.cpp
@@ -35,6 +38,9 @@ HEADERS += \
     seatdialog.h \
     ai.h \
     views/travelmoment.h \
+    ticketbooking.h \
+    ordermanagement.h \
+    dataanalyticswidget.h \
     # models/flight.h \
     # models/order.h \
     models/user.h
@@ -54,7 +60,6 @@ FORMS += \
 
 # 资源文件（样式表、图标等）
 RESOURCES += resources/resources.qrc \ # 若需添加图标，可在resources下创建icons目录并更新此处
-             resources/icons \
              resources/images \
              resources/text \
 

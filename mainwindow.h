@@ -3,6 +3,10 @@
 #include <QMainWindow>
 #include "flightmanager.h"
 #include "ai.h"
+#include "ticketbooking.h"
+#include "ordermanagement.h"
+#include "dataanalyticswidget.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -14,19 +18,27 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    // 新增：设置用户权限（假设管理员为true，普通用户为false）
     void setIsAdmin(bool isAdmin);
+    void applyTheme(bool isDarkMode);
 
 private:
     Ui::MainWindow *ui;
     FlightManager *m_flightManager;
     AIQueryWidget *m_aiquery;
-    bool m_isAdmin; // 新增：记录当前用户是否为管理员
+    TicketBookingWidget *m_ticketBooking;
+    OrderManagementWidget *m_orderManagement;
+    DataAnalyticsWidget *m_dataAnalytics;
+    bool m_isAdmin;
+    bool m_isDarkMode;
 
 private slots:
     void onTravelButtonClicked();
     void on_actionFlightManager_triggered();
     void on_btnFlightQuery_clicked();
     void on_btnAIService_clicked();
+    void on_btnTicketBooking_clicked();
+    void on_btnOrderManagement_clicked();
+    void on_btnDataAnalytics_clicked();
+    void toggleTheme();
 };
 #endif // MAINWINDOW_H

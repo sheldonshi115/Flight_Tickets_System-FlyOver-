@@ -1,0 +1,30 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "E:/Qt/6.9.3/mingw_64/include/**",
+                "E:/Qt/6.9.3/mingw_64/include/QtWidgets/**",
+                "E:/Qt/6.9.3/mingw_64/include/QtGui/**",
+                "E:/Qt/6.9.3/mingw_64/include/QtCore/**",
+                "E:/Qt/6.9.3/mingw_64/include/QtNetwork/**",
+                "E:/Qt/6.9.3/mingw_64/include/QtPrintSupport/**",
+                "E:/Qt/6.9.3/mingw_64/include/QtSql/**",
+                "E:/Qt/6.9.3/mingw_64/include/QtMultimedia/**",
+                "E:/Qt/6.9.3/mingw_64/include/QtMultimediaWidgets/**",
+                "E:/Qt/6.9.3/mingw_64/include/QtConcurrent/**",
+                "E:/Qt/6.9.3/mingw_64/include/QtXml/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "windows-gcc-x64"
+        }
+    ],
+    "version": 4
+}

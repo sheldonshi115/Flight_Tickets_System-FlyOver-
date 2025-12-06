@@ -2,7 +2,11 @@
 #define LOGINDIALOG_H
 
 #include <QDialog>
-#include "register.h" // 包含注册界面头文件
+#include <QPushButton>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QLabel>
+#include "register.h"
 
 namespace Ui {
 class LoginDialog;
@@ -15,14 +19,27 @@ class LoginDialog : public QDialog
 public:
     explicit LoginDialog(QWidget *parent = nullptr);
     ~LoginDialog();
+    void applyTheme(bool isDarkMode);
 
 private slots:
-    void on_loginButton_clicked();      // 登录按钮
-    void on_registerLink_clicked();     // 跳转到注册界面
+    void on_loginButton_clicked();
+    void on_registerLink_clicked();
+    void onRememberMeToggled(bool checked);
 
 private:
+    void setupUI();
+    void applyDarkTheme();
+    void applyLightTheme();
+
     Ui::LoginDialog *ui;
-    RegisterDialog *registerDialog;     // 注册界面指针
+    RegisterDialog *registerDialog;
+    QLineEdit *m_accountEdit;
+    QLineEdit *m_passwordEdit;
+    QPushButton *m_loginBtn;
+    QPushButton *m_registerLink;
+    QCheckBox *m_rememberMe;
+    QLabel *m_titleLabel;
+    bool m_isDarkMode;
 };
 
 #endif // LOGINDIALOG_H

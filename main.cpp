@@ -25,6 +25,7 @@ int main(int argc, char *argv[]) {
 
     // 显示登录界面
     LoginDialog login;
+    login.applyTheme(false);  // 默认浅色主题
     if (login.exec() != QDialog::Accepted) {
         return 0;
     }
