@@ -6,6 +6,8 @@ TEMPLATE = app
 
 # 源文件列表（按实际目录结构填写）
 SOURCES += \
+    ProfileDisplayDialog.cpp \
+    ProfileRefreshDialog.cpp \
     commondefs.cpp \
     flight.cpp \
     flightdialog.cpp \
@@ -26,6 +28,9 @@ SOURCES += \
 
 # 头文件列表
 HEADERS += \
+    ProfileDisplayDialog.h \
+    ProfileRefreshDialog.h \
+    UserProfile.h \
     clickablelabel.h \
     commondefs.h \
     dbmanager.h \

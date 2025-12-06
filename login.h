@@ -17,6 +17,7 @@ class LoginDialog : public QDialog
 public:
     explicit LoginDialog(QWidget *parent = nullptr);
     ~LoginDialog();
+    QString get_account()const;
 
 private slots:
     void on_loginButton_clicked();      // 登录按钮

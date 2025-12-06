@@ -10,106 +10,267 @@
 #include <QThread>
 #include <QScrollBar>
 #include <QColor>
-#include <QPainterPath> // 新增：用于绘制圆形头像
-// 1. 气泡绘制：完全保留你的代码
+#include <QPainterPath>
+#include <QPropertyAnimation>
+#include <QEasingCurve>
+#include <QCloseEvent>
+#include <QScreen>// 新增：用于绘制圆形头像
+#include <QGuiApplication>
+#include <QPushButton>
+#include <QSequentialAnimationGroup>
+#include <QParallelAnimationGroup>
+#include <QKeyEvent>
+// note: removed QMouseEvent include; mouse drag handled by system title bar
+// 1. 气泡绘制：保留并修复你的代码
 void ChatDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
     painter->save();
-    painter->setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform); // 新增：图片平滑缩放
+    painter->setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform);
 
     QString sender = index.data(SenderRole).toString();
     QString content = index.data(ContentRole).toString();
     qreal opacity = index.data(OpacityRole).toReal();
     if (opacity <= 0) opacity = 0.01;
 
-    // 原有文字尺寸计算逻辑不变
     QFont font = QApplication::font();
     QFontMetrics fm(font);
     QRect textRect = fm.boundingRect(QRect(0, 0, option.rect.width() * 0.75, 1000), Qt::TextWordWrap, content);
     QSize bubbleSize = QSize(textRect.width() + 28, textRect.height() + 20);
 
-    // 🔴 头像配置（仅AI气泡显示）
-    const int avatarSize = 40; // 头像尺寸（40x40，可调整）
-    const int avatarSpacing = 10; // 头像与气泡的间距
-    QRect avatarRect; // 头像绘制区域
-    QPixmap aiAvatar; // AI头像图片
+    const int avatarSize = 40;
+    const int avatarSpacing = 10;
+    QRect avatarRect;
+    QPixmap aiAvatar;
 
     QRect bubbleRect;
     QLinearGradient bubbleGradient;
-    if (sender == "用户") {
-        // 用户气泡：原有逻辑不变（无头像）
-        bubbleRect = QRect(option.rect.right() - bubbleSize.width(), option.rect.top() + 10, bubbleSize.width(), bubbleSize.height());
-        bubbleGradient = QLinearGradient(bubbleRect.topLeft(), bubbleRect.bottomRight());
-        bubbleGradient.setColorAt(0, QColor(66, 153, 225, int(opacity * 255)));
-        bubbleGradient.setColorAt(1, QColor(125, 184, 255, int(opacity * 255)));
-    } else {
-        // 🔴 AI气泡：先绘制头像，再调整气泡位置
-        // 1. 加载AI头像（资源文件路径，确保res.qrc配置正确）
-        static QPixmap cachedAvatar; // 静态缓存，避免每次绘制都加载
-        if (cachedAvatar.isNull()) {
-            // 从资源文件加载图片（路径对应res.qrc中的配置）
-            cachedAvatar = QPixmap(":/resources/images/ai_avatar.png").scaled(
-                avatarSize, avatarSize,
-                Qt::KeepAspectRatio,
-                Qt::SmoothTransformation // 平滑缩放
-                );
-        }
-        aiAvatar = cachedAvatar;
 
-        // 2. 确定头像位置（左侧居中对齐气泡）
-        avatarRect = QRect(
-            option.rect.left() + 10, // 头像左侧距离窗口左边10px
-            option.rect.top() + (bubbleSize.height() - avatarSize) / 2 + 10, // 垂直居中（与气泡对齐）
+    if (sender == "用户") {
+        // 用户气泡：在右侧显示用户头像，气泡向左偏移
+        // 头像优先来源：委托内部 m_userAvatar -> item DecorationRole -> widget property "userAvatar"
+        QPixmap drawUserAvatar;
+        QVariant dec = index.data(Qt::DecorationRole);
+        if (dec.canConvert<QPixmap>()) drawUserAvatar = dec.value<QPixmap>();
+        if (drawUserAvatar.isNull() && !m_userAvatar.isNull()) drawUserAvatar = m_userAvatar;
+        if (drawUserAvatar.isNull()) {
+            const QObject *p = option.widget ? option.widget->parent() : nullptr;
+            if (p && p->property("userAvatar").isValid()) drawUserAvatar = p->property("userAvatar").value<QPixmap>();
+        }
+
+        QRect userAvatarRect(
+            option.rect.right() - avatarSize - 10,
+            option.rect.top() + (bubbleSize.height() - avatarSize) / 2 + 10,
             avatarSize,
             avatarSize
             );
 
-        // 3. 绘制圆形头像（裁剪为圆形，抗锯齿）
+        bubbleRect = QRect(option.rect.right() - bubbleSize.width() - avatarSize - avatarSpacing,
+                           option.rect.top() + 10,
+                           bubbleSize.width(),
+                           bubbleSize.height());
+
+        bubbleGradient = QLinearGradient(bubbleRect.topLeft(), bubbleRect.bottomRight());
+        bubbleGradient.setColorAt(0, QColor(66, 153, 225, int(opacity * 255)));
+        bubbleGradient.setColorAt(1, QColor(125, 184, 255, int(opacity * 255)));
+
+        // 绘制用户头像（圆形）
+        painter->save();
+        QPainterPath path;
+        path.addEllipse(userAvatarRect);
+        painter->setClipPath(path);
+        if (!drawUserAvatar.isNull()) {
+            painter->drawPixmap(userAvatarRect, drawUserAvatar.scaled(avatarSize, avatarSize, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        } else {
+            painter->setBrush(QColor(200, 200, 200));
+            painter->drawEllipse(userAvatarRect);
+        }
+        painter->setClipRect(option.rect);
+        painter->setBrush(Qt::NoBrush);
+        painter->setPen(QPen(QColor(255,255,255),2));
+        painter->drawEllipse(userAvatarRect);
+        painter->restore();
+
+    } else {
+        // AI 气泡：在左侧显示 AI 头像，气泡右移
+        static QPixmap cachedAvatar;
+        if (cachedAvatar.isNull()) {
+            cachedAvatar = QPixmap(":/resources/images/ai_avatar.png").scaled(avatarSize, avatarSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        }
+        aiAvatar = cachedAvatar;
+
+        avatarRect = QRect(option.rect.left() + 10,
+                           option.rect.top() + (bubbleSize.height() - avatarSize) / 2 + 10,
+                           avatarSize,
+                           avatarSize);
+
         painter->save();
         QPainterPath avatarPath;
-        avatarPath.addEllipse(avatarRect); // 圆形路径
-        painter->setClipPath(avatarPath); // 裁剪为圆形
-
-        // 绘制头像（加载失败时显示默认灰色圆形）
-        if (!aiAvatar.isNull()) {
-            painter->drawPixmap(avatarRect, aiAvatar);
-        } else {
-            painter->setBrush(QColor(220, 220, 220));
-            painter->drawEllipse(avatarRect);
-        }
-
-        // 绘制头像边框（可选：白色细边框，增强立体感）
-        painter->setClipRect(option.rect); // 取消裁剪
+        avatarPath.addEllipse(avatarRect);
+        painter->setClipPath(avatarPath);
+        if (!aiAvatar.isNull()) painter->drawPixmap(avatarRect, aiAvatar);
+        else { painter->setBrush(QColor(220,220,220)); painter->drawEllipse(avatarRect); }
+        painter->setClipRect(option.rect);
         painter->setBrush(Qt::NoBrush);
-        painter->setPen(QPen(QColor(255, 255, 255), 2));// 白色边框，2px宽
+        painter->setPen(QPen(QColor(255,255,255),2));
         painter->drawEllipse(avatarRect);
         painter->restore();
 
-        // 4. 调整AI气泡位置：向右偏移（头像宽度+间距），避免重叠
-        bubbleRect = QRect(
-            option.rect.left() + avatarSize + avatarSpacing + 10, // 原有10px + 头像40px + 间距10px
-            option.rect.top() + 10,
-            bubbleSize.width(),
-            bubbleSize.height()
-            );
+        bubbleRect = QRect(option.rect.left() + avatarSize + avatarSpacing + 10,
+                           option.rect.top() + 10,
+                           bubbleSize.width(),
+                           bubbleSize.height());
 
-        // 气泡渐变（原有逻辑不变）
         bubbleGradient = QLinearGradient(bubbleRect.topLeft(), bubbleRect.bottomRight());
-        bubbleGradient.setColorAt(0, QColor(240, 240, 240, int(opacity * 255)));
-        bubbleGradient.setColorAt(1, QColor(224, 224, 224, int(opacity * 255)));
+        bubbleGradient.setColorAt(0, QColor(240,240,240, int(opacity*255)));
+        bubbleGradient.setColorAt(1, QColor(224,224,224, int(opacity*255)));
     }
 
-    // 绘制气泡（原有逻辑不变）
+    // 绘制气泡与文字
     painter->setBrush(bubbleGradient);
     painter->setPen(Qt::NoPen);
     painter->drawRoundedRect(bubbleRect, 20, 20);
 
-    // 绘制文字（原有逻辑不变）
-    painter->setPen(QColor(45, 55, 72, int(opacity * 255)));
+    painter->setPen(QColor(45,55,72, int(opacity*255)));
     painter->setFont(font);
     painter->drawText(QRect(bubbleRect.x() + 14, bubbleRect.y() + 10, bubbleRect.width() - 28, bubbleRect.height() - 20),
                       Qt::TextWordWrap, content);
 
     painter->restore();
+}
+// 将 show/close 动画实现放在 paint 之外，避免干扰绘制逻辑
+void AIQueryWidget::showWithAnimation() {
+    if (m_isClosing) return;
+    this->setWindowOpacity(0.0);
+
+    // 计算目标几何：始终根据 m_ownerWindow（优先）或主屏幕可用区域居中
+    QRect refRect;
+    if (m_ownerWindow) {
+        refRect = m_ownerWindow->geometry();
+    } else {
+        QScreen *screen = QGuiApplication::primaryScreen();
+        refRect = screen ? screen->availableGeometry() : QRect(0,0,1024,768);
+    }
+
+    // 增大默认尺寸以满足“适当调大一些”的要求
+    int w = qMax(720, refRect.width() / 2);
+    int h = qMax(520, refRect.height() / 2);
+    QRect targetGeom = QRect(refRect.center().x() - w/2, refRect.center().y() - h/2, w, h);
+
+    // 起始为目标中心小尺寸（从中心放大），避免太大或为0
+    QRect startGeom;
+    startGeom.setSize(QSize(qMax(1, targetGeom.width()/8), qMax(1, targetGeom.height()/8)));
+    startGeom.moveCenter(targetGeom.center());
+
+    // 先将窗口放在起始位置再 show，这样不会先闪到左上角
+    this->setWindowFlags(windowFlags() | Qt::Window);
+    this->setGeometry(startGeom);
+    this->show();
+    this->raise();
+    this->activateWindow();
+
+    QPropertyAnimation *geomAnim = new QPropertyAnimation(this, "geometry");
+    geomAnim->setDuration(380);
+    geomAnim->setStartValue(startGeom);
+    geomAnim->setEndValue(targetGeom);
+    geomAnim->setEasingCurve(QEasingCurve::OutBack);
+
+    QPropertyAnimation *opAnim = new QPropertyAnimation(this, "windowOpacity");
+    opAnim->setDuration(300);
+    opAnim->setStartValue(0.0);
+    opAnim->setEndValue(1.0);
+    opAnim->setEasingCurve(QEasingCurve::Linear);
+
+    geomAnim->start(QAbstractAnimation::DeleteWhenStopped);
+    opAnim->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
+void AIQueryWidget::animateClose() {
+    if (m_isClosing) return;
+    m_isClosing = true;
+
+    QRect startGeom = this->geometry();
+
+    // 优先尝试定位到父窗口的 AI 按钮（objectName: "btnAIService"），若找到则把目标设为该按钮中心
+    QRect endGeom;
+    QWidget *parentWin = m_ownerWindow ? m_ownerWindow : this->parentWidget();
+    QPushButton *targetBtn = nullptr;
+    if (parentWin) targetBtn = parentWin->findChild<QPushButton*>("btnAIService");
+    if (targetBtn) {
+        QPoint btnCenterGlobal = targetBtn->mapToGlobal(targetBtn->rect().center());
+        QSize endSize(qMax(24, startGeom.width()/8), qMax(18, startGeom.height()/8));
+        endGeom = QRect(QPoint(0,0), endSize);
+        endGeom.moveCenter(btnCenterGlobal);
+    } else {
+        // 回退：屏幕右下角垃圾桶点
+        QRect refRect;
+        QWidget *p = this->parentWidget();
+        if (p) refRect = p->geometry();
+        else {
+            QScreen *screen = QGuiApplication::primaryScreen();
+            refRect = screen ? screen->availableGeometry() : QRect(0,0,800,600);
+        }
+        QPoint trashPoint(refRect.right() - 48, refRect.bottom() - 48);
+        QSize endSize(qMax(24, startGeom.width()/8), qMax(18, startGeom.height()/8));
+        endGeom = QRect(QPoint(0,0), endSize);
+        endGeom.moveCenter(trashPoint);
+    }
+
+    // 先做一个短暂的“放大”感（paper 投掷前的抬起/突出），再移动到垃圾桶并淡出
+    QRect popGeom = startGeom;
+    int padW = qMax(10, startGeom.width() / 12);
+    int padH = qMax(8, startGeom.height() / 12);
+    popGeom.adjust(-padW, -padH, padW, padH); // 稍微放大
+
+    QPropertyAnimation *popAnim = new QPropertyAnimation(this, "geometry");
+    popAnim->setDuration(160);
+    popAnim->setStartValue(startGeom);
+    popAnim->setEndValue(popGeom);
+    popAnim->setEasingCurve(QEasingCurve::OutQuad);
+
+    // 移动到垃圾桶并缩小淡出
+    QPropertyAnimation *moveAnim = new QPropertyAnimation(this, "geometry");
+    moveAnim->setDuration(560);
+    moveAnim->setStartValue(popGeom);
+    moveAnim->setEndValue(endGeom);
+    moveAnim->setEasingCurve(QEasingCurve::InQuad);
+
+    QPropertyAnimation *fadeAnim = new QPropertyAnimation(this, "windowOpacity");
+    fadeAnim->setDuration(560);
+    fadeAnim->setStartValue(1.0);
+    fadeAnim->setEndValue(0.0);
+    fadeAnim->setEasingCurve(QEasingCurve::InQuad);
+
+    connect(fadeAnim, &QPropertyAnimation::finished, this, [this]() {
+        this->hide();
+        this->deleteLater();
+    });
+
+    // 顺序动画：pop -> (move + fade)
+    QSequentialAnimationGroup *seq = new QSequentialAnimationGroup(this);
+    QParallelAnimationGroup *parallel = new QParallelAnimationGroup(seq);
+    parallel->addAnimation(moveAnim);
+    parallel->addAnimation(fadeAnim);
+    seq->addAnimation(popAnim);
+    seq->addAnimation(parallel);
+    seq->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
+// Removed custom mouse drag handlers to rely on system title bar for window movement
+
+void AIQueryWidget::closeEvent(QCloseEvent *event) {
+    if (m_isClosing) {
+        event->accept();
+        return;
+    }
+    event->ignore();
+    animateClose();
+}
+
+void AIQueryWidget::keyPressEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_Escape) {
+        this->close();
+        return;
+    }
+    QWidget::keyPressEvent(event);
 }
 // 新增：更新气泡透明度，实现淡入动画
 void AIQueryWidget::paintEvent(QPaintEvent *event) {
@@ -124,7 +285,16 @@ void AIQueryWidget::paintEvent(QPaintEvent *event) {
     painter.setPen(Qt::NoPen);
     painter.drawRect(this->rect());
 }
-
+void AIQueryWidget::setUserAvatar(const QPixmap &pixmap) {
+    // 将头像传递给委托（若委托提供接口）并作为属性保存以供绘制时读取
+    if (m_chatDelegate) {
+        // 通过dynamic_cast安全调用（m_chatDelegate是指针）
+        ChatDelegate *d = m_chatDelegate;
+        if (d) d->setUserAvatar(pixmap);
+    }
+    // 将头像存为控件属性，paint中会尝试读取该属性作为备选
+    this->setProperty("userAvatar", QVariant::fromValue(pixmap));
+}
 void AIQueryWidget::updateItemOpacity(QListWidgetItem *item) {
     if (!item || !ui->chatListWidget) return;
 
@@ -260,6 +430,8 @@ AIQueryWidget::AIQueryWidget(QWidget *parent) :
 {
     ui->setupUi(this);
     this->setWindowTitle("AI assistant");
+    // 确保作为顶级窗口时拥有窗口装饰（最大化/最小化/关闭按钮）
+    this->setWindowFlag(Qt::Window, true);
     ui->queryButton->setStyleSheet(R"(
         QPushButton {
             color: black;           /* 按钮字体黑色 */
@@ -306,7 +478,8 @@ AIQueryWidget::AIQueryWidget(QWidget *parent) :
     connect(m_requestTimer, &QTimer::timeout, this, &AIQueryWidget::onRequestTimeout);
 
     // 初始欢迎消息（安全添加）
-    safeAddChatItem("AI", "我是一个能回答关于航班查询的问题的助手。如果您有关于航班的问题，请告诉我具体的出发地、目的地和日期。");
+    QString sestence = QString("您好，我是一个能回答关于航班查询的问题的助手。如果您有关于航班的问题，请告诉我具体的出发地、目的地和日期。");
+    safeAddChatItem("AI", sestence);
 
     // 信号连接（断开旧连接，避免重复连接）
     disconnect(m_netManager, &QNetworkAccessManager::finished, this, &AIQueryWidget::onReplyFinished);

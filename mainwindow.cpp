@@ -6,6 +6,8 @@
 #include <QEasingCurve>
 #include "ai.h"
 #include<ordermanager.h>
+#include "ProfileDisplayDialog.h"
+#include <QMouseEvent>
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
@@ -24,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnFlightQuery, &QPushButton::clicked, this, &MainWindow::on_btnFlightQuery_clicked);
     connect(ui->btnOrders, &QPushButton::clicked, this, &MainWindow::on_btnOrders_clicked);
     connect(ui->actionViewOrders, &QAction::triggered, this, &MainWindow::on_btnOrders_clicked);
-
+    connect(ui->btnProfile,&QPushButton::clicked,this,&MainWindow::clicked_btnProfile);
     // 【新增】提前初始化OrderManager（确保信号连接时已存在）
     if (!m_orderManager) {
         m_orderManager = new OrderManager(ui->stackedWidget);
@@ -33,11 +35,72 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setWindowTitle("航班票务系统 - 主菜单");
     setIsAdmin(true);
+    m_appUser.account = "account";
+    m_appUser.nickname = "用户";
+    m_appUser.gender = Gender::Unknown;
+    m_appUser.phone = "13900000000";
+    m_appUser.email = "admin@company.com";
+    m_appUser.avatar = QPixmap(":/images/default_avatar.jpg");
+
+    // 创建浮动小球 AI 按钮（初始在主窗口左侧隐藏）
+    m_floatingAIButton = new QPushButton(this);
+    m_floatingAIButton->setObjectName("floatingAIButton");
+    m_floatingAIButton->setFixedSize(40, 40); // 小球尺寸
+    m_floatingAIButton->setToolTip("AI Assistant");
+    m_floatingAIButton->setFlat(true);
+    m_floatingAIButton->setStyleSheet("background: transparent; border: none;");
+    // 简化：绘制蓝色圆，中心绘制黑色大写 'T'
+    const int size = 40;
+    QPixmap pix(size, size);
+    pix.fill(Qt::transparent);
+    QPainter painter(&pix);
+    painter.setRenderHint(QPainter::Antialiasing);
+    // 蓝色圆
+    QColor blue(33,150,243); // #2196F3
+    painter.setBrush(blue);
+    painter.setPen(Qt::NoPen);
+    painter.drawEllipse(0, 0, size, size);
+    // 仅绘制纯色圆（不绘制文字）
+    painter.end();
+
+    QPixmap finalPixmap = pix;
+    m_floatingAIButton->setIcon(QIcon(finalPixmap));
+    m_floatingAIButton->setIconSize(finalPixmap.size());
+    // 初始位置置于左侧大部分隐藏状态（相对于主窗口）
+    int initBtnW = m_floatingAIButton->width();
+    int initX = - (initBtnW - 8);
+    int initY = qMax(40, (this->height() / 2) - initBtnW/2);
+    m_floatingAIButton->move(initX, initY);
+    m_floatingAIButton->hide();
+
+    // 动画对象（用于滑出/滑入）
+    m_floatingAnim = new QPropertyAnimation(m_floatingAIButton, "pos", this);
+    m_floatingAnim->setEasingCurve(QEasingCurve::OutCubic);
+    m_floatingAnim->setDuration(320);
+
+    // 安装事件过滤器：同时在应用级安装以捕获全局鼠标移动（只要鼠标靠近主窗口左侧就弹出）
+    this->setMouseTracking(true);
+    this->installEventFilter(this);
+    qApp->installEventFilter(this);
+    m_floatingAIButton->setMouseTracking(true);
+    m_floatingAIButton->installEventFilter(this);
+
+    // 点击时复用原来的 AI 弹窗逻辑
+    connect(m_floatingAIButton, &QPushButton::clicked, this, &MainWindow::on_btnAIService_clicked);
 }
 
 void MainWindow::on_btnAIService_clicked(){
+    // 创建为顶级窗口（传入 nullptr），以保留窗口装饰（最大化/最小化/关闭按钮）
     AIQueryWidget *aiq = new AIQueryWidget(nullptr);
-    aiq->show();
+    // 将主窗口设置为 owner（用于动画定位回到该窗口的 AI 按钮）
+    aiq->setOwnerWindow(this);
+    // 将当前主窗口保存的用户头像传递给AI对话窗口，以在用户消息前显示
+    aiq->setUserAvatar(m_appUser.avatar);
+    // 使用带动画的显示方法
+    aiq->showWithAnimation();
+}
+void MainWindow::set_account(QString acc){
+    m_appUser.account = acc;
 }
 MainWindow::~MainWindow()
 {
@@ -130,7 +193,23 @@ void MainWindow::on_actionLogout_triggered()
 
     this->close(); // 再关闭主窗口（此时登录窗口已存在，程序不退出）
 }
+void MainWindow::clicked_btnProfile(){
+    // 1. 创建展示窗口（指定 this 为父对象，由主窗口管理内存）
+    ProfileDisplayDialog dlg(this);
 
+    // 2. 将主窗口持有的数据传给弹窗
+    dlg.updateDisplay(m_appUser);
+
+    // 3. 以模态方式运行（阻塞主窗口，直到弹窗关闭）
+    dlg.exec();
+
+    // 4. 窗口关闭后，数据可能在里面被修改了，我们需要取回最新数据
+    // 这样下次再打开时，显示的就是修改后的新数据了
+    m_appUser = dlg.getCurrentProfile();
+
+    // 5. (可选) 如果主窗口也有显示头像/昵称的地方，这里记得刷新一下主窗口的UI
+    // ui->lblMainAvatar->setPixmap(m_appUser.avatar);
+}
 void MainWindow::on_actionAbout_triggered()
 {
     // 严格组织关于信息，包含必要要素
@@ -161,4 +240,78 @@ void MainWindow::on_actionAbout_triggered()
     QMessageBox::about(this,
                        tr("关于%1").arg(systemName),  // 标题国际化（tr函数支持多语言）
                        aboutText);
+}
+void MainWindow::slideOutFloatingButton() {
+    if (!m_floatingAIButton || !m_floatingAnim) return;
+    int btnW = m_floatingAIButton->width();
+    int x = 8; // visible offset from left client edge
+    int y = qMax(40, (this->height() / 2) - btnW/2);
+    QPoint endPos(x, y);
+    m_floatingAIButton->show();
+    m_floatingAnim->stop();
+    m_floatingAnim->setStartValue(m_floatingAIButton->pos());
+    m_floatingAnim->setEndValue(endPos);
+    m_floatingAnim->start();
+    m_floatingVisible = true;
+}
+
+void MainWindow::slideInFloatingButton() {
+    if (!m_floatingAIButton || !m_floatingAnim) return;
+    int btnW = m_floatingAIButton->width();
+    int x = - (btnW - 8); // hide most of button off left
+    int y = qMax(40, (this->height() / 2) - btnW/2);
+    QPoint endPos(x, y);
+    m_floatingAnim->stop();
+    m_floatingAnim->setStartValue(m_floatingAIButton->pos());
+    m_floatingAnim->setEndValue(endPos);
+    // disconnect previous finished connections to avoid multiple hides
+    QObject::disconnect(m_floatingAnim, &QPropertyAnimation::finished, nullptr, nullptr);
+    connect(m_floatingAnim, &QPropertyAnimation::finished, this, [this]() {
+        if (!m_floatingVisible && !m_buttonHovered) {
+            if (m_floatingAIButton) m_floatingAIButton->hide();
+        }
+    });
+    m_floatingAnim->start();
+    m_floatingVisible = false;
+}
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
+    // 捕获全局鼠标移动事件（安装在 qApp 上），使用全局坐标判断与主窗口左侧的距离
+    if (event->type() == QEvent::MouseMove) {
+        QMouseEvent *me = static_cast<QMouseEvent*>(event);
+        if (me) {
+            QPoint global = me->globalPos();
+            int windowLeft = this->mapToGlobal(QPoint(0,0)).x();
+            int xThreshold = 48; // 横向阈值
+            int dx = global.x() - windowLeft; // 鼠标相对窗口左边的横向偏移
+
+            bool nearLeft = (dx <= xThreshold && dx >= -xThreshold);
+            if (nearLeft) {
+                if (!m_floatingVisible) slideOutFloatingButton();
+            } else {
+                if (m_floatingVisible && !m_buttonHovered) slideInFloatingButton();
+            }
+        }
+        // 继续让事件传递
+        return false;
+    }
+
+    // Hover enter/leave on the floating button
+    if (watched == m_floatingAIButton) {
+        if (event->type() == QEvent::Enter) {
+            m_buttonHovered = true;
+            if (!m_floatingVisible) slideOutFloatingButton();
+            return false;
+        } else if (event->type() == QEvent::Leave) {
+            m_buttonHovered = false;
+            // hide if mouse is away from left edge
+            QPoint global = QCursor::pos();
+            QPoint rel = this->mapFromGlobal(global);
+            int threshold = 24;
+            if (rel.x() > threshold) slideInFloatingButton();
+            return false;
+        }
+    }
+
+    return QMainWindow::eventFilter(watched, event);
 }

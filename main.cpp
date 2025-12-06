@@ -25,6 +25,7 @@ int main(int argc, char *argv[]) {
 
     // 关键1：初始登录窗口改为堆对象（模态显示，保留原有体验）
     LoginDialog *loginDialog = new LoginDialog();
+    QString acc = loginDialog->get_account();
     loginDialog->setAttribute(Qt::WA_DeleteOnClose); // 关闭时自动释放内存
     // 初始登录用exec()（模态），登录成功后再创建主窗口
     if (loginDialog->exec() != QDialog::Accepted) {
@@ -34,6 +35,7 @@ int main(int argc, char *argv[]) {
 
     // 关键2：主窗口改为堆对象（避免栈对象生命周期问题）
     MainWindow *mainWindow = new MainWindow();
+    mainWindow->set_account(acc);
     mainWindow->setAttribute(Qt::WA_DeleteOnClose);
     mainWindow->show();
 

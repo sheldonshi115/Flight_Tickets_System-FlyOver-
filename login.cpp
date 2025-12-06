@@ -114,7 +114,9 @@ void LoginDialog::on_loginButton_clicked()
         ui->passwordEdit->clear();
     }
 }
-
+QString LoginDialog::get_account()const{
+    return ui->accountEdit->text().trimmed();
+}
 void LoginDialog::on_registerLink_clicked()
 {
     if (!registerDialog) {
