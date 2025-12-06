@@ -144,7 +144,13 @@ bool DBManager::initDatabase()
             id INT PRIMARY KEY AUTO_INCREMENT,
             account VARCHAR(50) NOT NULL UNIQUE,
             password VARCHAR(100) NOT NULL,
-            role VARCHAR(20) DEFAULT 'user'
+            salt VARCHAR(16) NOT NULL, -- 新增：存储16位盐值
+            nickname VARCHAR(50) DEFAULT '',    -- 新增：昵称
+            phone VARCHAR(20) UNIQUE,           -- 新增：电话（唯一）
+            email VARCHAR(100) UNIQUE,          -- 新增：邮箱（唯一）
+            gender VARCHAR(10) DEFAULT '未知',  -- 新增：性别
+            image VARCHAR(255) DEFAULT '',     -- 新增：头像路径
+            role VARCHAR(20) DEFAULT 'user'     -- 角色（保留原字段）
         )
     )";
     // 航班表
@@ -379,19 +385,7 @@ bool DBManager::addUser(const QString& account, const QString& password, const Q
     return query.exec();
 }
 
-// 验证用户（双方逻辑一致，保留）
-bool DBManager::verifyUser(const QString& account, const QString& password, QString& role) {
-    if (!db.isOpen()) return false;
-    QSqlQuery query(db);
-    query.prepare("SELECT role FROM users WHERE account = :account AND password = :password");
-    query.bindValue(":account", account);
-    query.bindValue(":password", password);
-    if (query.exec() && query.next()) {
-        role = query.value("role").toString();
-        return true;
-    }
-    return false;
-}
+
 QList<Order> DBManager::getAllOrders()
 {
     QList<Order> orders;

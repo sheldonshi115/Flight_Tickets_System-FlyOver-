@@ -2,6 +2,8 @@
 #include "ui_login.h"
 #include "dbmanager.h" // 引入DBManager
 #include "mainwindow.h"
+#include "utils.h"
+#include <QRegularExpression>
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QMessageBox>
@@ -19,12 +21,13 @@ LoginDialog::LoginDialog(QWidget *parent) :
     ui->registerLink->setStyleSheet("color: #0000FF; text-decoration: underline; background: transparent; border: none;");
     ui->registerLink->setText("没有账号？点击注册");
     ui->passwordEdit->setEchoMode(QLineEdit::Password);
+
 }
 
 LoginDialog::~LoginDialog()
 {
     delete ui;
-    if (registerDialog) delete registerDialog;
+    //if (registerDialog) delete registerDialog;
 }
 
 void LoginDialog::on_loginButton_clicked()
@@ -38,6 +41,19 @@ void LoginDialog::on_loginButton_clicked()
         return;
     }
 
+    // 新增：账号格式校验（与注册逻辑一致）
+    if (account.length() < 4 || account.length() > 20 ||
+        !account.contains(QRegularExpression("^[A-Za-z0-9]+$"))) {
+        QMessageBox::warning(this, "提示", "账号需为4-20位字母或数字！");
+        return;
+    }
+    // 新增：登录锁定检查
+    if (QDateTime::currentDateTime() < m_lockUntil) {
+        int left = QDateTime::currentDateTime().secsTo(m_lockUntil);
+        QMessageBox::warning(this, "锁定中", QString("连续输错5次，还需等待%1秒").arg(left));
+        return;
+    }
+
     // 直接调用DBManager获取数据库连接
     QSqlDatabase db = DBManager::instance().getDatabase();
     if (!db.isOpen()) {
@@ -46,7 +62,7 @@ void LoginDialog::on_loginButton_clicked()
 
     // 验证账号密码
     QSqlQuery query(db);
-    query.prepare("SELECT password FROM users WHERE account = :account"); // 注意表名是users（DBManager中创建的是users）
+    query.prepare("SELECT password, salt FROM users WHERE account = :account"); // 注意表名是users（DBManager中创建的是users）
     query.bindValue(":account", account);
 
     if (!query.exec()) {
@@ -55,33 +71,54 @@ void LoginDialog::on_loginButton_clicked()
     }
 
     if (query.next()) {
-        if (query.value(0).toString() == password) {
-            QMessageBox::information(this, "成功", "登录成功！");
+        // 新增：加密比对
+        QString storedPwd = query.value(0).toString();
+        QString salt = query.value(1).toString();
 
-            // 关键：判断当前登录窗口是“初始模态”还是“退出后非模态”
+        // 处理盐值为空的情况（如旧用户）
+        if (salt.isEmpty()) {
+            QMessageBox::warning(this, "错误", "账号信息不完整，请联系管理员重置密码！");
+            return;
+        }
+
+        QString inputPwd = hashPassword(password, salt);
+
+        if (inputPwd == storedPwd) {
+            // 登录成功（保持原有窗口切换逻辑）
+            QMessageBox::information(this, "成功", "登录成功！");
+            m_failedAttempts = 0; // 重置失败次数
+
             if (this->parent() == nullptr && this->isModal()) {
-                // 情况1：初始登录（模态，无父对象）→ 用accept()适配main.cpp的exec()
                 this->accept();
             } else {
-                // 情况2：退出后重新登录（非模态）→ 创建堆主窗口，延迟关闭登录窗口
                 MainWindow *mainWin = new MainWindow();
                 mainWin->setAttribute(Qt::WA_DeleteOnClose);
                 mainWin->show();
-
                 QTimer::singleShot(100, this, &LoginDialog::close);
             }
         } else {
-            QMessageBox::warning(this, "失败", "密码错误！");
+            // 密码错误（新增失败次数限制）
+            m_failedAttempts++;
+            int remaining = 5 - m_failedAttempts;
+            if (remaining <= 0) {
+                m_lockUntil = QDateTime::currentDateTime().addSecs(60);
+                QMessageBox::warning(this, "失败", "密码错误，账号已锁定1分钟！");
+            } else {
+                QMessageBox::warning(this, "失败", QString("密码错误，还可尝试%1次").arg(remaining));
+            }
+            ui->passwordEdit->clear();
         }
     } else {
         QMessageBox::warning(this, "失败", "账号不存在！");
+        ui->accountEdit->clear();
+        ui->passwordEdit->clear();
     }
 }
 
 void LoginDialog::on_registerLink_clicked()
 {
     if (!registerDialog) {
-        registerDialog = new RegisterDialog(this);
+        registerDialog.reset(new RegisterDialog(this));
         registerDialog->setWindowTitle("注册");
     }
     registerDialog->exec();

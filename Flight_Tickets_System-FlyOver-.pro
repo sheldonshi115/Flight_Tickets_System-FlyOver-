@@ -40,6 +40,7 @@ HEADERS += \
     clickablelabel.h \
     seatdialog.h \
     ai.h \
+    utils.h \
     views/travelmoment.h \
     # models/flight.h \
     # models/order.h \

@@ -42,7 +42,6 @@ public:
     bool removeFlight(int flightId);
 
     bool addUser(const QString& account, const QString& password, const QString& role = "user");
-    bool verifyUser(const QString& account, const QString& password, QString& role);
     QList<Order> getAllOrders(); // 获取所有订单
     QList<Order> findOrders(const QString& flightNum, const QDate& date, const QString& status); // 筛选订单
      // 新增订单

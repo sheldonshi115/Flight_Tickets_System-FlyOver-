@@ -1,6 +1,7 @@
 #include "register.h"
 #include "ui_register.h"
 #include "dbmanager.h" // 引入DBManager
+#include "utils.h" // 引入加密工具
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QMessageBox>
@@ -61,10 +62,15 @@ void RegisterDialog::on_registerButton_clicked()
         return;
     }
 
-    // 插入新用户
-    query.prepare("INSERT INTO users (account, password) VALUES (:account, :password)"); // 表名是users
+    // 先声明并生成盐值（调用之前定义的generateSalt函数）
+    QString salt = generateSalt(); // 确保utils.h中实现了generateSalt()
+    QString encryptedPwd = hashPassword(password, salt); // 确保utils.h中实现了hashPassword()
+
+    // 2. 插入语句包含salt字段
+    query.prepare("INSERT INTO users (account, password, salt) VALUES (:account, :password, :salt)");
     query.bindValue(":account", account);
-    query.bindValue(":password", password); // 建议加密：QCryptographicHash::hash(password.toUtf8(), QCryptographicHash::Md5).toHex()
+    query.bindValue(":password", encryptedPwd); // 存储加密后的密码
+    query.bindValue(":salt", salt);
 
     if (query.exec()) {
         QMessageBox::information(this, "成功", "注册成功，请登录！");
