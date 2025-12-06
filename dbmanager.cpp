@@ -5,12 +5,14 @@
 #include <QDebug>
 #include <ctime>
 #include <cstdlib>
+#include <QStandardPaths>
+#include <QFile>
 
 // 使用你的数据库配置
-const QString DBManager::DB_NAME = "flight_ticked_db";
+const QString DBManager::DB_NAME = "login_db";
 const QString DBManager::DB_HOST = "localhost";
 const QString DBManager::DB_USER = "root";       // 你的MySQL用户名
-const QString DBManager::DB_PWD = "pwd"; // 你的MySQL密码
+const QString DBManager::DB_PWD = "woshinidie1218"; // 你的MySQL密码
 const int DBManager::DB_PORT = 3306;             // 默认端口
 
 // 单例模式：静态实例
@@ -563,3 +565,142 @@ Flight DBManager::getFlightByFlightNum(const QString& flightNum)
     }
     return flight;
 }
+
+// 保存用户信息到数据库
+bool DBManager::saveUserProfile(const UserProfile& profile)
+{
+    if (!db.isOpen()) {
+        qWarning() << "数据库未连接，无法保存用户信息！";
+        return false;
+    }
+
+    if (profile.account.isEmpty()) {
+        qWarning() << "账号不能为空，无法保存用户信息！";
+        return false;
+    }
+
+    QSqlQuery query(db);
+    // 转换性别为字符串
+    QString genderStr;
+    switch(profile.gender) {
+    case Gender::Male: genderStr = "男"; break;
+    case Gender::Female: genderStr = "女"; break;
+    default: genderStr = "未知"; break;
+    }
+
+    // 获取头像文件路径（如果有的话）
+    QString imagePath;
+    if (!profile.avatar.isNull()) {
+        // 生成头像文件名路径
+        QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        imagePath = appDataPath + "/avatars/" + profile.account + ".png";
+    }
+
+    // 处理 phone 和 email - 空字符串转为 NULL，避免 UNIQUE 约束问题
+    QVariant phoneValue = profile.phone.trimmed().isEmpty() ? QVariant(QVariant::String) : profile.phone.trimmed();
+    QVariant emailValue = profile.email.trimmed().isEmpty() ? QVariant(QVariant::String) : profile.email.trimmed();
+
+    qDebug() << "准备保存用户信息:"
+             << "account=" << profile.account
+             << "nickname=" << profile.nickname
+             << "phone=" << profile.phone
+             << "email=" << profile.email
+             << "gender=" << genderStr
+             << "image=" << imagePath;
+
+    // 使用 UPDATE 语句更新用户信息（假设账号不变）
+    query.prepare(R"(
+        UPDATE users SET nickname = :nickname, phone = :phone, email = :email, 
+                        gender = :gender, image = :image
+        WHERE account = :account
+    )");
+    query.bindValue(":nickname", profile.nickname);
+    query.bindValue(":phone", phoneValue);
+    query.bindValue(":email", emailValue);
+    query.bindValue(":gender", genderStr);
+    query.bindValue(":image", imagePath);
+    query.bindValue(":account", profile.account);
+
+    if (!query.exec()) {
+        qWarning() << "保存用户信息失败:" << query.lastError().text();
+        qWarning() << "SQL语句:" << query.lastQuery();
+        return false;
+    }
+
+    int rowsAffected = query.numRowsAffected();
+    qDebug() << "用户信息保存成功，受影响行数:" << rowsAffected << "账号:" << profile.account;
+    
+    if (rowsAffected == 0) {
+        qWarning() << "警告：没有任何行被更新，账号可能不存在:" << profile.account;
+    }
+    
+    return true;
+}
+
+
+// 从数据库加载用户信息
+UserProfile DBManager::loadUserProfile(const QString& account)
+{
+    UserProfile profile;
+    profile.account = account; // 确保账号被设置
+    
+    if (!db.isOpen()) {
+        qWarning() << "数据库未连接，无法加载用户信息！";
+        profile.gender = Gender::Unknown;
+        return profile;
+    }
+
+    qDebug() << "开始加载用户信息，account=" << account;
+
+    QSqlQuery query(db);
+    query.prepare(R"(
+        SELECT account, nickname, phone, email, gender, image FROM users WHERE account = :account
+    )");
+    query.bindValue(":account", account);
+
+    if (!query.exec()) {
+        qWarning() << "查询用户信息失败:" << query.lastError().text();
+        profile.gender = Gender::Unknown;
+        return profile;
+    }
+
+    if (query.next()) {
+        profile.account = query.value("account").toString();
+        profile.nickname = query.value("nickname").toString();
+        profile.phone = query.value("phone").isNull() ? "" : query.value("phone").toString();
+        profile.email = query.value("email").isNull() ? "" : query.value("email").toString();
+
+        // 转换性别字符串为枚举
+        QString genderStr = query.value("gender").toString();
+        if (genderStr == "男") profile.gender = Gender::Male;
+        else if (genderStr == "女") profile.gender = Gender::Female;
+        else profile.gender = Gender::Unknown;
+
+        // 加载头像
+        QString imagePath = query.value("image").toString();
+        if (!imagePath.isEmpty() && QFile::exists(imagePath)) {
+            if (!profile.avatar.load(imagePath)) {
+                qWarning() << "加载头像失败:" << imagePath;
+                qDebug() << "尝试加载的路径:" << imagePath << "存在:" << QFile::exists(imagePath);
+            } else {
+                qDebug() << "头像加载成功:" << imagePath;
+            }
+        }
+
+        qDebug() << "用户信息加载成功:" << account 
+                 << "nickname:" << profile.nickname 
+                 << "phone:" << profile.phone 
+                 << "email:" << profile.email
+                 << "gender:" << genderStr;
+    } else {
+        qWarning() << "未找到用户:" << account;
+        // 仍然返回account，其他信息使用默认值
+        profile.nickname = account; // 默认使用账号作为昵称
+        profile.gender = Gender::Unknown;
+        qDebug() << "使用默认值初始化用户信息";
+    }
+
+    return profile;
+}
+
+

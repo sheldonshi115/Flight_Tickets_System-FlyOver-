@@ -7,6 +7,7 @@
 #include <QList>
 #include <QtMath>
 #include "flight.h" // 引入 Flight 类
+#include "UserProfile.h" // 引入用户信息结构体
 
 class DBManager : public QObject
 {
@@ -48,6 +49,11 @@ public:
     bool cancelOrder(int orderId); // 取消订单（更新状态为"已取消"）
     Order getOrderById(int orderId); // 根据ID获取订单详情
     Flight getFlightByFlightNum(const QString& flightNum);
+    
+    // 新增：用户信息保存和加载方法
+    bool saveUserProfile(const UserProfile& profile); // 保存用户信息到数据库
+    UserProfile loadUserProfile(const QString& account); // 从数据库加载用户信息
+    
     // 新增：获取最后一次数据库错误信息（调试用）
     QString lastError() const { return db.lastError().text(); }
 };

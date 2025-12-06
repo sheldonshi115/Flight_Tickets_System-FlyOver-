@@ -1,3 +1,10 @@
+CONFIG += rtti  # Qt 内置的 RTTI 启用开关
+QMAKE_CXXFLAGS += -frtti  # MinGW 编译器强制启用 RTTI（核心）
+QMAKE_CXXFLAGS_DEBUG += -frtti
+QMAKE_CXXFLAGS_RELEASE += -frtti
+QMAKE_CXXFLAGS -= -fno-rtti
+QMAKE_CXXFLAGS_DEBUG -= -fno-rtti
+QMAKE_CXXFLAGS_RELEASE -= -fno-rtti
 QT       += core gui sql network# 核心库、GUI库、数据库模块（MySQL支持）
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  # 兼容Qt5及以上版本的Widgets
 
@@ -22,6 +29,9 @@ SOURCES += \
     seatdialog.cpp \
     ai.cpp \
     views/travelmoment.cpp \
+    forgotpassworddialog.cpp \
+    emailsender.cpp \
+    emailconfig.cpp \
     # models/flight.cpp \
     # models/order.cpp \
     models/user.cpp
@@ -47,6 +57,9 @@ HEADERS += \
     ai.h \
     utils.h \
     views/travelmoment.h \
+    forgotpassworddialog.h \
+    emailsender.h \
+    emailconfig.h \
     # models/flight.h \
     # models/order.h \
     models/user.h
@@ -63,6 +76,7 @@ FORMS += \
     ai.ui \
     profileDisplaydialog.ui \
     profileRefreshdialog.ui \
+    forgotpassworddialog.ui \
     views/travelmoment.ui
 
 # 资源文件（样式表、图标等）

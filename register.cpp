@@ -66,11 +66,13 @@ void RegisterDialog::on_registerButton_clicked()
     QString salt = generateSalt(); // 确保utils.h中实现了generateSalt()
     QString encryptedPwd = hashPassword(password, salt); // 确保utils.h中实现了hashPassword()
 
-    // 2. 插入语句包含salt字段
-    query.prepare("INSERT INTO users (account, password, salt) VALUES (:account, :password, :salt)");
+    // 2. 插入语句包含salt字段和其他初始字段
+    query.prepare("INSERT INTO users (account, password, salt, gender, nickname) VALUES (:account, :password, :salt, :gender, :nickname)");
     query.bindValue(":account", account);
     query.bindValue(":password", encryptedPwd); // 存储加密后的密码
     query.bindValue(":salt", salt);
+    query.bindValue(":gender", "未知"); // 初始化性别为"未知"
+    query.bindValue(":nickname", account); // 初始化昵称为账号名
 
     if (query.exec()) {
         QMessageBox::information(this, "成功", "注册成功，请登录！");

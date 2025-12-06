@@ -103,6 +103,16 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="forgotPasswordLink">
+       <property name="text">
+        <string>忘记密码？</string>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: rgb(255, 140, 0); text-decoration: underline; background-color: transparent; border: none;</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>

@@ -2,6 +2,7 @@
 #include "ui_login.h"
 #include "dbmanager.h" // 引入DBManager
 #include "mainwindow.h"
+#include "forgotpassworddialog.h" // 新增：忘记密码对话框
 #include "utils.h"
 #include <QRegularExpression>
 #include <QSqlQuery>
@@ -20,8 +21,15 @@ LoginDialog::LoginDialog(QWidget *parent) :
     // 注册链接样式
     ui->registerLink->setStyleSheet("color: #0000FF; text-decoration: underline; background: transparent; border: none;");
     ui->registerLink->setText("没有账号？点击注册");
+    
+    // 新增：忘记密码链接
+    ui->forgotPasswordLink->setStyleSheet("color: #FF8C00; text-decoration: underline; background: transparent; border: none;");
+    ui->forgotPasswordLink->setText("忘记密码？");
+    
     ui->passwordEdit->setEchoMode(QLineEdit::Password);
-
+    
+    // 连接忘记密码链接信号
+    connect(ui->forgotPasswordLink, &QPushButton::clicked, this, &LoginDialog::onForgotPasswordClicked);
 }
 
 LoginDialog::~LoginDialog()
@@ -84,18 +92,23 @@ void LoginDialog::on_loginButton_clicked()
         QString inputPwd = hashPassword(password, salt);
 
         if (inputPwd == storedPwd) {
-            // 登录成功（保持原有窗口切换逻辑）
+            // 登录成功
             QMessageBox::information(this, "成功", "登录成功！");
             m_failedAttempts = 0; // 重置失败次数
 
-            if (this->parent() == nullptr && this->isModal()) {
-                this->accept();
-            } else {
-                MainWindow *mainWin = new MainWindow();
-                mainWin->setAttribute(Qt::WA_DeleteOnClose);
-                mainWin->show();
-                QTimer::singleShot(100, this, &LoginDialog::close);
-            }
+            // 从数据库加载用户信息
+            UserProfile userProfile = DBManager::instance().loadUserProfile(account);
+            qDebug() << "登录成功，加载的账号:" << userProfile.account;
+            
+            // 创建主窗口
+            MainWindow *mainWin = new MainWindow();
+            mainWin->setAttribute(Qt::WA_DeleteOnClose);
+            // 将加载的用户信息传递给主窗口
+            mainWin->setUserProfile(userProfile);
+            mainWin->show();
+            
+            // 关闭登录窗口
+            QTimer::singleShot(100, this, &LoginDialog::close);
         } else {
             // 密码错误（新增失败次数限制）
             m_failedAttempts++;
@@ -125,3 +138,10 @@ void LoginDialog::on_registerLink_clicked()
     }
     registerDialog->exec();
 }
+
+void LoginDialog::onForgotPasswordClicked()
+{
+    ForgotPasswordDialog forgotDialog(this);
+    forgotDialog.exec();
+}
+

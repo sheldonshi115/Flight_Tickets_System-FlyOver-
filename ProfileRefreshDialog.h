@@ -27,4 +27,5 @@ private:
     Ui::ProfileRefreshDialog *ui;
     QPixmap currentAvatar; // 暂存当前头像
     QString accountStr;    // 账号通常只读，存一下
+    QString avatarFilePath; // 新增：记录头像文件路径
 };

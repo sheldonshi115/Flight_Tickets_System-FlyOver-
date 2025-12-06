@@ -48,13 +48,13 @@ void ProfileDisplayDialog::on_btnEditProfile_clicked() {
 
     // 3. 模态运行窗口
     if (editDlg.exec() == QDialog::Accepted) {
-        // 4. 如果用户点了保存，获取新数据并更新展示
+        // 4. 如果用户点了保存，获取新数据并更新本地和界面
         UserProfile newData = editDlg.getProfileData();
-
-        // 此处通常需要调用 API 或数据库保存数据
-        // bool saveSuccess = MyDatabase::save(newData);
-
-        // 更新界面
+        
+        // 更新本地的 m_currentUser（保存按钮已在 ProfileRefreshDialog 中调用了 DBManager）
+        m_currentUser = newData;
+        
+        // 更新界面显示
         updateDisplay(newData);
     }
 }

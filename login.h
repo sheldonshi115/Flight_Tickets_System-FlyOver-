@@ -22,6 +22,7 @@ public:
 private slots:
     void on_loginButton_clicked();      // 登录按钮
     void on_registerLink_clicked();     // 跳转到注册界面
+    void onForgotPasswordClicked();     // 忘记密码链接
 
 private:
     Ui::LoginDialog *ui;

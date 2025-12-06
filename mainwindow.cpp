@@ -35,11 +35,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setWindowTitle("航班票务系统 - 主菜单");
     setIsAdmin(true);
-    m_appUser.account = "account";
+    // 注意：account 会在登录成功后通过 setUserProfile 被设置
+    m_appUser.account = "";
     m_appUser.nickname = "用户";
     m_appUser.gender = Gender::Unknown;
-    m_appUser.phone = "13900000000";
-    m_appUser.email = "admin@company.com";
+    m_appUser.phone = "";
+    m_appUser.email = "";
     m_appUser.avatar = QPixmap(":/images/default_avatar.jpg");
 
     // 创建浮动小球 AI 按钮（初始在主窗口左侧隐藏）
@@ -101,6 +102,15 @@ void MainWindow::on_btnAIService_clicked(){
 }
 void MainWindow::set_account(QString acc){
     m_appUser.account = acc;
+}
+
+void MainWindow::setUserProfile(const UserProfile& profile) {
+    m_appUser = profile;
+    qDebug() << "MainWindow::setUserProfile 被调用"
+             << "account=" << profile.account
+             << "nickname=" << profile.nickname
+             << "phone=" << profile.phone
+             << "email=" << profile.email;
 }
 MainWindow::~MainWindow()
 {
@@ -194,6 +204,8 @@ void MainWindow::on_actionLogout_triggered()
     this->close(); // 再关闭主窗口（此时登录窗口已存在，程序不退出）
 }
 void MainWindow::clicked_btnProfile(){
+    qDebug() << "clicked_btnProfile: m_appUser.account=" << m_appUser.account;
+    
     // 1. 创建展示窗口（指定 this 为父对象，由主窗口管理内存）
     ProfileDisplayDialog dlg(this);
 

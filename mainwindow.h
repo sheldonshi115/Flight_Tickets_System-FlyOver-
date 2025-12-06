@@ -50,5 +50,6 @@ private slots:
     void clicked_btnProfile();
 public slots:
     void set_account(QString acc);
+    void setUserProfile(const UserProfile& profile); // 新增：设置用户信息
 };
 #endif // MAINWINDOW_H
