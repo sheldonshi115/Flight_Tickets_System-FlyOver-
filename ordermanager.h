@@ -31,12 +31,14 @@ private slots:
     void on_btnReset_clicked(); // 重置筛选条件
     void on_btnCancelOrder_clicked(); // 取消订单
     void on_btnViewDetail_clicked(); // 查看订单详情
+    void on_btnCloseDetail_clicked(); // 关闭订单详情
     void on_btnExit_clicked(); // 返回主页
     void on_twOrderList_itemSelectionChanged(); // 表格选择变化
 
 private:
     Ui::OrderManager *ui;
     bool m_isCancelManual = true; // 新增：标记取消订单是否为手动点击
+    void applyModernStyle(); // 应用现代化样式
     // 移除冗余的generateOrderNumber（订单号生成在FlightManager中统一处理）
 };
 

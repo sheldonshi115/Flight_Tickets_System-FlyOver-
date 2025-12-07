@@ -8,6 +8,7 @@
 #include <QtMath>
 #include "flight.h" // 引入 Flight 类
 #include "UserProfile.h" // 引入用户信息结构体
+#include "membersystem.h" // 引入会员系统
 
 class DBManager : public QObject
 {
@@ -24,7 +25,9 @@ private:
     static const QString DB_USER;
     static const QString DB_PWD;
     static const int DB_PORT;
+    static const int MAX_FLIGHT_RECORDS;
     void insertTestFlights();
+    void trimFlightsToLimit(int limit);
 
 public:
     // 单例模式：获取唯一实例

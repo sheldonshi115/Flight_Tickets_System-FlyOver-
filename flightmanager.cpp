@@ -10,7 +10,13 @@
 #include <QDebug>
 #include <QRegularExpression>
 #include <QUuid>
-#include <QTimer> // 新增：延迟刷新
+#include <QTimer>
+#include <QLabel>
+#include <QPushButton>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QSet>
+#include <QGraphicsDropShadowEffect>
 
 // 构造函数
 FlightManager::FlightManager(QWidget *parent) :
@@ -22,6 +28,9 @@ FlightManager::FlightManager(QWidget *parent) :
     m_isManualClick(true) // 初始化手动点击标记
 {
     ui->setupUi(this);
+
+    // 应用现代化样式
+    applyModernStyle();
 
     // 1. 初始化和日期设置
     setupTableView();
@@ -97,15 +106,78 @@ void FlightManager::setupTableView()
         "出发时间", "到达时间", "票价",
         "总座位", "可用座位"
     });
-    ui->twFlightList->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    
+    // 设置列宽 - 确保时间列能完整显示
+    ui->twFlightList->setColumnWidth(1, 100);  // 航班号
+    ui->twFlightList->setColumnWidth(2, 100);  // 出发城市
+    ui->twFlightList->setColumnWidth(3, 100);  // 到达城市
+    ui->twFlightList->setColumnWidth(4, 150);  // 出发时间 - 增宽以显示完整日期时间
+    ui->twFlightList->setColumnWidth(5, 150);  // 到达时间 - 增宽以显示完整日期时间
+    ui->twFlightList->setColumnWidth(6, 100);  // 票价
+    ui->twFlightList->setColumnWidth(7, 80);   // 总座位
+    ui->twFlightList->setColumnWidth(8, 80);   // 可用座位
+    
+    // 其余列自适应
+    ui->twFlightList->horizontalHeader()->setStretchLastSection(true);
+    
     ui->twFlightList->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->twFlightList->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->twFlightList->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->twFlightList->hideColumn(0); // 隐藏id列
+    
+    // 现代化表格样式 - 优化版
+    ui->twFlightList->setStyleSheet(R"(
+        QTableWidget {
+            background-color: #FFFFFF;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            gridline-color: transparent;
+            font-size: 13px;
+            font-family: 'Microsoft YaHei UI', 'SimHei';
+        }
+        QTableWidget::item {
+            padding: 14px 10px;
+            border-bottom: 1px solid #F1F5F9;
+            color: #475569;
+        }
+        QTableWidget::item:selected {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #DBEAFE, stop:1 #BFDBFE);
+            color: #1E40AF;
+            font-weight: 600;
+        }
+        QTableWidget::item:hover {
+            background-color: #F8FAFC;
+        }
+        QHeaderView::section {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #60A5FA, stop:1 #3B82F6);
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 14px 10px;
+            border: none;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        QHeaderView::section:first {
+            border-top-left-radius: 10px;
+        }
+        QHeaderView::section:last {
+            border-top-right-radius: 10px;
+        }
+    )");
+    
+    ui->twFlightList->verticalHeader()->setVisible(false);
+    ui->twFlightList->setShowGrid(false);
+    ui->twFlightList->setAlternatingRowColors(true);
+    ui->twFlightList->setAlternatingRowColors(false); // 禁用默认交替颜色，使用CSS控制
 }
 
 void FlightManager::loadFlightsToTable(const QList<Flight>& flights)
 {
+    // 保存航班列表供卡片视图使用
+    m_currentFlights = flights;
+    
     // 清空选中项
     ui->twFlightList->clearSelection();
     ui->twFlightList->setCurrentItem(nullptr);
@@ -118,19 +190,75 @@ void FlightManager::loadFlightsToTable(const QList<Flight>& flights)
         int row = ui->twFlightList->rowCount();
         ui->twFlightList->insertRow(row);
 
-        ui->twFlightList->setItem(row, 0, new QTableWidgetItem(QString::number(flight.id())));
-        ui->twFlightList->setItem(row, 1, new QTableWidgetItem(flight.flightNumber()));
-        ui->twFlightList->setItem(row, 2, new QTableWidgetItem(flight.departureCity()));
-        ui->twFlightList->setItem(row, 3, new QTableWidgetItem(flight.arrivalCity()));
-        ui->twFlightList->setItem(row, 4, new QTableWidgetItem(flight.departureTime().toString("yyyy-MM-dd hh:mm")));
-        ui->twFlightList->setItem(row, 5, new QTableWidgetItem(flight.arrivalTime().toString("yyyy-MM-dd hh:mm")));
-        ui->twFlightList->setItem(row, 6, new QTableWidgetItem(QString::number(flight.price(), 'f', 2)));
-        ui->twFlightList->setItem(row, 7, new QTableWidgetItem(QString::number(flight.totalSeats())));
-        ui->twFlightList->setItem(row, 8, new QTableWidgetItem(QString::number(flight.availableSeats())));
+        // ID列（隐藏）
+        QTableWidgetItem* idItem = new QTableWidgetItem(QString::number(flight.id()));
+        ui->twFlightList->setItem(row, 0, idItem);
+        
+        // 航班号 - 居中对齐
+        QTableWidgetItem* flightNoItem = new QTableWidgetItem(flight.flightNumber());
+        flightNoItem->setTextAlignment(Qt::AlignCenter);
+        ui->twFlightList->setItem(row, 1, flightNoItem);
+        
+        // 出发城市 - 居中对齐
+        QTableWidgetItem* depCityItem = new QTableWidgetItem(flight.departureCity());
+        depCityItem->setTextAlignment(Qt::AlignCenter);
+        ui->twFlightList->setItem(row, 2, depCityItem);
+        
+        // 到达城市 - 居中对齐
+        QTableWidgetItem* arrCityItem = new QTableWidgetItem(flight.arrivalCity());
+        arrCityItem->setTextAlignment(Qt::AlignCenter);
+        ui->twFlightList->setItem(row, 3, arrCityItem);
+        
+        // 出发时间 - 居中对齐，完整格式
+        QTableWidgetItem* depTimeItem = new QTableWidgetItem(
+            flight.departureTime().toString("yyyy-MM-dd hh:mm")
+        );
+        depTimeItem->setTextAlignment(Qt::AlignCenter);
+        ui->twFlightList->setItem(row, 4, depTimeItem);
+        
+        // 到达时间 - 居中对齐，完整格式
+        QTableWidgetItem* arrTimeItem = new QTableWidgetItem(
+            flight.arrivalTime().toString("yyyy-MM-dd hh:mm")
+        );
+        arrTimeItem->setTextAlignment(Qt::AlignCenter);
+        ui->twFlightList->setItem(row, 5, arrTimeItem);
+        
+        // 票价 - 右对齐，保癹2位小数
+        QTableWidgetItem* priceItem = new QTableWidgetItem(
+            QString::fromUtf8("￥") + QString::number(flight.price(), 'f', 2)
+        );
+        priceItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        ui->twFlightList->setItem(row, 6, priceItem);
+        
+        // 总座位 - 居中对齐
+        QTableWidgetItem* totalSeatsItem = new QTableWidgetItem(QString::number(flight.totalSeats()));
+        totalSeatsItem->setTextAlignment(Qt::AlignCenter);
+        ui->twFlightList->setItem(row, 7, totalSeatsItem);
+        
+        // 可用座位 - 居中对齐，根据座位情况设置颜色
+        QTableWidgetItem* availSeatsItem = new QTableWidgetItem(QString::number(flight.availableSeats()));
+        availSeatsItem->setTextAlignment(Qt::AlignCenter);
+        
+        // 座位不足时显示红色警告
+        if (flight.availableSeats() < 10) {
+            availSeatsItem->setForeground(QBrush(QColor("#DC2626"))); // 红色
+            availSeatsItem->setFont(QFont("Microsoft YaHei UI", -1, QFont::Bold));
+        } else if (flight.availableSeats() < 50) {
+            availSeatsItem->setForeground(QBrush(QColor("#F59E0B"))); // 橙色
+        } else {
+            availSeatsItem->setForeground(QBrush(QColor("#10B981"))); // 绿色
+        }
+        
+        ui->twFlightList->setItem(row, 8, availSeatsItem);
     }
 
     // 同步按钮状态
     on_twFlightList_itemSelectionChanged();
+    
+    // 如果处于卡片视图模式，同时更新卡片
+    if (m_isCardViewMode) {
+        loadFlightsToCards(flights);
+    }
 }
 
 Flight FlightManager::getSelectedFlight()
@@ -223,6 +351,238 @@ void FlightManager::setAdminMode(bool isAdminMode)
     ui->btnAdd->setVisible(isAdminMode);
     ui->btnEdit->setVisible(isAdminMode);
     ui->btnDelete->setVisible(isAdminMode);
+    
+    // 普通用户模式切换到卡片视图
+    setCardViewMode(!isAdminMode);
+}
+
+// 设置卡片视图模式
+void FlightManager::setCardViewMode(bool cardMode)
+{
+    m_isCardViewMode = cardMode;
+    
+    if (cardMode) {
+        // 隐藏表格，显示卡片视图
+        ui->twFlightList->setVisible(false);
+        
+        // 创建卡片滚动区域（如果尚未创建）
+        if (!m_cardScrollArea) {
+            m_cardScrollArea = new QScrollArea(this);
+            m_cardScrollArea->setWidgetResizable(true);
+            m_cardScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+            m_cardScrollArea->setStyleSheet(R"(
+                QScrollArea {
+                    border: none;
+                    background-color: transparent;
+                }
+                QScrollBar:vertical {
+                    background-color: transparent;
+                    width: 8px;
+                    border-radius: 4px;
+                }
+                QScrollBar::handle:vertical {
+                    background-color: #BDBDBD;
+                    border-radius: 4px;
+                    min-height: 30px;
+                }
+                QScrollBar::handle:vertical:hover {
+                    background-color: #9E9E9E;
+                }
+            )");
+            
+            m_cardContainer = new QWidget();
+            m_cardContainer->setStyleSheet("background-color: transparent;");
+            m_cardScrollArea->setWidget(m_cardContainer);
+            
+            // 将卡片区域添加到布局（替代表格位置）
+            if (ui->twFlightList->parentWidget() && ui->twFlightList->parentWidget()->layout()) {
+                ui->twFlightList->parentWidget()->layout()->addWidget(m_cardScrollArea);
+            }
+        }
+        
+        m_cardScrollArea->setVisible(true);
+        
+        // 刷新卡片视图
+        loadFlightsToCards(m_currentFlights);
+    } else {
+        // 显示表格，隐藏卡片视图
+        ui->twFlightList->setVisible(true);
+        if (m_cardScrollArea) {
+            m_cardScrollArea->setVisible(false);
+        }
+    }
+}
+
+// 加载航班到卡片视图
+void FlightManager::loadFlightsToCards(const QList<Flight>& flights)
+{
+    if (!m_cardContainer) return;
+    
+    // 清除旧卡片
+    QLayout *oldLayout = m_cardContainer->layout();
+    if (oldLayout) {
+        QLayoutItem *item;
+        while ((item = oldLayout->takeAt(0)) != nullptr) {
+            if (item->widget()) {
+                item->widget()->deleteLater();
+            }
+            delete item;
+        }
+        delete oldLayout;
+    }
+    
+    // 创建新的网格布局
+    QVBoxLayout *layout = new QVBoxLayout(m_cardContainer);
+    layout->setSpacing(16);
+    layout->setContentsMargins(20, 20, 20, 20);
+    
+    if (flights.isEmpty()) {
+        QLabel *emptyLabel = new QLabel("暂无符合条件的航班");
+        emptyLabel->setAlignment(Qt::AlignCenter);
+        emptyLabel->setStyleSheet("font-size: 16px; color: #9E9E9E; padding: 40px;");
+        layout->addWidget(emptyLabel);
+    } else {
+        for (const Flight& flight : flights) {
+            QFrame *card = createFlightCard(flight);
+            layout->addWidget(card);
+        }
+    }
+    
+    layout->addStretch();
+}
+
+// 创建单个航班卡片
+QFrame* FlightManager::createFlightCard(const Flight& flight)
+{
+    QFrame *card = new QFrame();
+    card->setObjectName("flightCard");
+    card->setStyleSheet(R"(
+        QFrame#flightCard {
+            background-color: #FFFFFF;
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            padding: 0px;
+        }
+        QFrame#flightCard:hover {
+            border-color: #3498DB;
+            background-color: #F8FBFF;
+        }
+    )");
+    card->setCursor(Qt::PointingHandCursor);
+    
+    // 使用QGraphicsDropShadowEffect替代CSS box-shadow
+    QGraphicsDropShadowEffect *cardShadow = new QGraphicsDropShadowEffect(card);
+    cardShadow->setBlurRadius(12);
+    cardShadow->setColor(QColor(0, 0, 0, 30));
+    cardShadow->setOffset(0, 2);
+    card->setGraphicsEffect(cardShadow);
+    
+    QHBoxLayout *cardLayout = new QHBoxLayout(card);
+    cardLayout->setContentsMargins(20, 16, 20, 16);
+    cardLayout->setSpacing(20);
+    
+    // 左侧：航班信息
+    QVBoxLayout *leftLayout = new QVBoxLayout();
+    leftLayout->setSpacing(8);
+    
+    // 航班号
+    QLabel *flightNoLabel = new QLabel(flight.flightNumber());
+    flightNoLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #42A5F5; background: transparent;");
+    
+    // 出发-到达
+    QHBoxLayout *routeLayout = new QHBoxLayout();
+    QLabel *depLabel = new QLabel(flight.departureCity());
+    depLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #212121; background: transparent;");
+    QLabel *arrowLabel = new QLabel("  ✈️  →  ");
+    arrowLabel->setStyleSheet("font-size: 16px; color: #9E9E9E; background: transparent;");
+    QLabel *arrLabel = new QLabel(flight.arrivalCity());
+    arrLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #212121; background: transparent;");
+    routeLayout->addWidget(depLabel);
+    routeLayout->addWidget(arrowLabel);
+    routeLayout->addWidget(arrLabel);
+    routeLayout->addStretch();
+    
+    // 时间
+    QLabel *timeLabel = new QLabel(QString("%1 - %2")
+        .arg(flight.departureTime().toString("HH:mm"))
+        .arg(flight.arrivalTime().toString("HH:mm")));
+    timeLabel->setStyleSheet("font-size: 14px; color: #757575; background: transparent;");
+    
+    // 日期
+    QLabel *dateLabel = new QLabel(flight.departureTime().toString("yyyy年MM月dd日"));
+    dateLabel->setStyleSheet("font-size: 13px; color: #9E9E9E; background: transparent;");
+    
+    leftLayout->addWidget(flightNoLabel);
+    leftLayout->addLayout(routeLayout);
+    leftLayout->addWidget(timeLabel);
+    leftLayout->addWidget(dateLabel);
+    
+    // 右侧：价格和购票按钮
+    QVBoxLayout *rightLayout = new QVBoxLayout();
+    rightLayout->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    rightLayout->setSpacing(12);
+    
+    // 余票
+    QLabel *seatsLabel = new QLabel(QString("余票: %1").arg(flight.availableSeats()));
+    seatsLabel->setStyleSheet(QString("font-size: 13px; color: %1; background: transparent;")
+        .arg(flight.availableSeats() > 0 ? "#4CAF50" : "#F44336"));
+    seatsLabel->setAlignment(Qt::AlignRight);
+    
+    // 价格
+    QLabel *priceLabel = new QLabel(QString("¥%1").arg(flight.price(), 0, 'f', 0));
+    priceLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #FF5722; background: transparent;");
+    priceLabel->setAlignment(Qt::AlignRight);
+    
+    // 购票按钮
+    QPushButton *bookBtn = new QPushButton("立即购票");
+    bookBtn->setStyleSheet(R"(
+        QPushButton {
+            background-color: #42A5F5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #1E88E5;
+        }
+        QPushButton:disabled {
+            background-color: #BDBDBD;
+        }
+    )");
+    bookBtn->setEnabled(flight.availableSeats() > 0);
+    bookBtn->setCursor(Qt::PointingHandCursor);
+    
+    // 连接购票按钮点击事件 - 需要捕获航班号
+    QString flightNo = flight.flightNumber();
+    connect(bookBtn, &QPushButton::clicked, this, [this, flightNo]() {
+        // 选中该航班并触发购票流程
+        m_currentFlightNo = flightNo;
+        
+        // 在表格中找到对应行并选中（保持兼容）
+        for (int row = 0; row < ui->twFlightList->rowCount(); row++) {
+            if (ui->twFlightList->item(row, 1) && 
+                ui->twFlightList->item(row, 1)->text() == flightNo) {
+                ui->twFlightList->selectRow(row);
+                break;
+            }
+        }
+        
+        // 触发选座
+        m_isManualClick = true;
+        onSelectSeatClicked();
+    });
+    
+    rightLayout->addWidget(seatsLabel);
+    rightLayout->addWidget(priceLabel);
+    rightLayout->addWidget(bookBtn);
+    
+    cardLayout->addLayout(leftLayout, 1);
+    cardLayout->addLayout(rightLayout);
+    
+    return card;
 }
 
 void FlightManager::on_btnDelete_clicked()
@@ -450,14 +810,58 @@ void FlightManager::onSelectSeatClicked()
     info.arrivalCity = flight.arrivalCity();
     info.dateTime = flight.departureTime().toString("yyyy-MM-dd HH:mm");
 
-    QVector<SeatData> seats = {
-        {"1A", Available, true, false}, {"1B", Sold, false, true},
-        {"1C", Available, false, true}, {"1D", Available, true, false},
-        {"2A", Available, true, false}, {"2B", Available, false, true},
-        {"3A", Sold, true, false},      {"3B", Available, false, false},
-        {"4F", Available, true, false}
-    };
+    // ========== 动态生成座位布局 ==========
+    // 根据航班的总座位数动态生成座位
+    int totalSeats = flight.totalSeats();
+    int availableSeats = flight.availableSeats();
+    int soldSeats = totalSeats - availableSeats;
+    
+    // 计算座位布局
+    // 假设每排6个座位 (A B C | D E F)
+    int seatsPerRow = 6;
+    int totalRows = (totalSeats + seatsPerRow - 1) / seatsPerRow;
+    
+    QVector<SeatData> seats;
+    QString seatCols = "ABCDEF";
+    
+    // 随机分布已售座位（用于演示）
+    QSet<QString> soldSeatIds;
+    int soldCount = 0;
+    
+    // 使用航班号的哈希值作为随机种子，确保同一航班每次座位分布相同
+    uint seed = qHash(flight.flightNumber());
+    
+    // 生成需要标记为已售的座位位置
+    while (soldCount < soldSeats) {
+        int randRow = (seed % totalRows) + 1;
+        int randCol = (seed / totalRows) % seatsPerRow;
+        seed = seed * 1103515245 + 12345; // 简单的线性同余生成器
+        
+        QString seatId = QString::number(randRow) + seatCols[randCol];
+        if (!soldSeatIds.contains(seatId)) {
+            soldSeatIds.insert(seatId);
+            soldCount++;
+        }
+        
+        // 防止无限循环
+        if (soldCount >= totalSeats) break;
+    }
+    
+    // 生成所有座位
+    for (int row = 1; row <= totalRows; row++) {
+        for (int col = 0; col < seatsPerRow; col++) {
+            QString seatId = QString::number(row) + seatCols[col];
+            SeatData seat;
+            seat.seatId = seatId;
+            seat.state = soldSeatIds.contains(seatId) ? Sold : Available;
+            seat.isWindow = (col == 0 || col == 5); // A和F是靠窗
+            seat.isAisle = (col == 2 || col == 3);  // C和D是靠过道
+            seats.append(seat);
+        }
+    }
+    
     info.allSeats = seats;
+    // ========== 动态座位布局结束 ==========
 
     SeatDialog dialog(info, this);
     if (dialog.exec() == QDialog::Accepted) {
@@ -529,5 +933,158 @@ void FlightManager::on_twFlightList_itemSelectionChanged()
     if (m_isAdminMode) {
         ui->btnEdit->setEnabled(hasSelection);
         ui->btnDelete->setEnabled(hasSelection);
+    }
+}
+
+// 现代化样式应用
+void FlightManager::applyModernStyle()
+{
+    // 整体背景
+    this->setStyleSheet(R"(
+        QWidget {
+            background-color: #f5f7fa;
+            font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+        }
+    )");
+    
+    // 搜索区域输入框样式
+    QString inputStyle = R"(
+        QLineEdit, QDateEdit {
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 13px;
+            background-color: #fff;
+        }
+        QLineEdit:focus, QDateEdit:focus {
+            border-color: #4caf50;
+        }
+    )";
+    
+    if (ui->leDeparture) {
+        ui->leDeparture->setStyleSheet(inputStyle);
+        ui->leDeparture->setPlaceholderText("出发城市");
+    }
+    if (ui->leArrival) {
+        ui->leArrival->setStyleSheet(inputStyle);
+        ui->leArrival->setPlaceholderText("到达城市");
+    }
+    if (ui->deDate) {
+        ui->deDate->setStyleSheet(inputStyle);
+    }
+    
+    // 主要操作按钮样式
+    QString primaryBtnStyle = R"(
+        QPushButton {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #43a047;
+        }
+        QPushButton:pressed {
+            background-color: #388e3c;
+        }
+        QPushButton:disabled {
+            background-color: #bdbdbd;
+        }
+    )";
+    
+    QString secondaryBtnStyle = R"(
+        QPushButton {
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 13px;
+        }
+        QPushButton:hover {
+            background-color: #e0e0e0;
+            border-color: #ccc;
+        }
+    )";
+    
+    QString accentBtnStyle = R"(
+        QPushButton {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #1565c0;
+        }
+        QPushButton:disabled {
+            background-color: #bdbdbd;
+        }
+    )";
+    
+    QString dangerBtnStyle = R"(
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #EF4444, stop:1 #DC2626);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #F87171, stop:1 #EF4444);
+        }
+        QPushButton:pressed {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #DC2626, stop:1 #B91C1C);
+        }
+    )";
+    
+    // 应用按钮样式
+    if (ui->btnSearch) {
+        ui->btnSearch->setStyleSheet(primaryBtnStyle);
+        ui->btnSearch->setCursor(Qt::PointingHandCursor);
+        ui->btnSearch->setText("🔍 搜索航班");
+    }
+    if (ui->btnRefresh) {
+        ui->btnRefresh->setStyleSheet(secondaryBtnStyle);
+        ui->btnRefresh->setCursor(Qt::PointingHandCursor);
+        ui->btnRefresh->setText("🔄 刷新");
+    }
+    if (ui->btnSeat) {
+        ui->btnSeat->setStyleSheet(accentBtnStyle);
+        ui->btnSeat->setCursor(Qt::PointingHandCursor);
+        ui->btnSeat->setText("💺 选择座位");
+    }
+    if (ui->btnBook) {
+        ui->btnBook->setStyleSheet(primaryBtnStyle);
+        ui->btnBook->setCursor(Qt::PointingHandCursor);
+        ui->btnBook->setText("🎫 确认购票");
+    }
+    if (ui->btnExit) {
+        ui->btnExit->setStyleSheet(secondaryBtnStyle);
+        ui->btnExit->setCursor(Qt::PointingHandCursor);
+        ui->btnExit->setText("← 返回");
+    }
+    if (ui->btnAdd) {
+        ui->btnAdd->setStyleSheet(primaryBtnStyle);
+        ui->btnAdd->setCursor(Qt::PointingHandCursor);
+    }
+    if (ui->btnEdit) {
+        ui->btnEdit->setStyleSheet(accentBtnStyle);
+        ui->btnEdit->setCursor(Qt::PointingHandCursor);
+    }
+    if (ui->btnDelete) {
+        ui->btnDelete->setStyleSheet(dangerBtnStyle);
+        ui->btnDelete->setCursor(Qt::PointingHandCursor);
     }
 }

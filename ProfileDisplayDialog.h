@@ -15,7 +15,8 @@ public:
     void updateDisplay(const UserProfile& profile);
     UserProfile getCurrentProfile() const { return m_currentUser; }
 private slots:
-    void on_btnEditProfile_clicked(); // 点击编辑资料
+    void on_btnEditProfile_clicked();
+    void on_btnLogout_clicked(); // 点击编辑资料
 
 private:
     Ui::ProfileDisplayDialog *ui;

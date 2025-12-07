@@ -1,7 +1,40 @@
 #include "ProfileDisplayDialog.h"
+#include <QMessageBox>
+#include <QMainWindow>
+
 ProfileDisplayDialog::ProfileDisplayDialog(QWidget *parent)
     : QDialog(parent), ui(new Ui::ProfileDisplayDialog) {
     ui->setupUi(this);
+    
+    // 优化对话框背景样式 - 纯白色背景
+    this->setStyleSheet(R"(
+        QDialog {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #FFFFFF, stop:1 #F8FAFC);
+        }
+        QLabel {
+            color: #475569;
+            font-size: 14px;
+        }
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #3B82F6, stop:1 #2563EB);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #60A5FA, stop:1 #3B82F6);
+        }
+        QPushButton:pressed {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #2563EB, stop:1 #1E40AF);
+        }
+    )");
 
     // 初始显示
     updateDisplay(m_currentUser);
@@ -36,6 +69,20 @@ void ProfileDisplayDialog::updateDisplay(const UserProfile& profile) {
     // 设置头像
     if (!profile.avatar.isNull()) {
         ui->lblAvatar->setPixmap(getRoundPixmap(profile.avatar, ui->lblAvatar->size()));
+        ui->lblAvatar->setToolTip(QString::fromUtf8("点击修改头像"));
+    } else {
+        // 如果没有头像，显示提示文字
+        ui->lblAvatar->setText(QString::fromUtf8("点击此处\n添加头像"));
+        ui->lblAvatar->setAlignment(Qt::AlignCenter);
+        ui->lblAvatar->setStyleSheet(
+            "background-color: #F0F9FF; "
+            "border-radius: 60px; "
+            "border: 2px dashed #BFDBFE; "
+            "color: #60A5FA; "
+            "font-size: 14px; "
+            "font-weight: 600;"
+        );
+        ui->lblAvatar->setToolTip(QString::fromUtf8("点击修改头像"));
     }
 }
 
@@ -56,5 +103,35 @@ void ProfileDisplayDialog::on_btnEditProfile_clicked() {
         
         // 更新界面显示
         updateDisplay(newData);
+    }
+}
+
+void ProfileDisplayDialog::on_btnLogout_clicked() {
+    // 确认退出登录
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this,
+        "退出登录",
+        "确定要退出登录吗？",
+        QMessageBox::Yes | QMessageBox::No
+    );
+    
+    if (reply == QMessageBox::Yes) {
+        // 关闭个人信息窗口
+        this->reject();
+        
+        // 查找主窗口并关闭
+        QWidget *mainWindow = nullptr;
+        QWidget *current = this->parentWidget();
+        while (current) {
+            if (qobject_cast<QMainWindow*>(current)) {
+                mainWindow = current;
+                break;
+            }
+            current = current->parentWidget();
+        }
+        
+        if (mainWindow) {
+            mainWindow->close();
+        }
     }
 }

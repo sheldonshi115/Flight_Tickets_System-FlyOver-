@@ -5,7 +5,7 @@ QMAKE_CXXFLAGS_RELEASE += -frtti
 QMAKE_CXXFLAGS -= -fno-rtti
 QMAKE_CXXFLAGS_DEBUG -= -fno-rtti
 QMAKE_CXXFLAGS_RELEASE -= -fno-rtti
-QT       += core gui sql network# 核心库、GUI库、数据库模块（MySQL支持）
+QT       += core gui sql network printsupport # 核心库、GUI库、数据库模块（MySQL支持）、网络、打印支持
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets  # 兼容Qt5及以上版本的Widgets
 
 TARGET = Flight_Tickets_System-FlyOver-  # 可执行程序名称（与项目名一致）
@@ -32,6 +32,13 @@ SOURCES += \
     forgotpassworddialog.cpp \
     emailsender.cpp \
     emailconfig.cpp \
+    dataanalyticswidget.cpp \
+    thememanager.cpp \
+    boardingpass.cpp \
+    notificationmanager.cpp \
+    languagemanager.cpp \
+    membersystem.cpp \
+    mapvisualization.cpp \
     # models/flight.cpp \
     # models/order.cpp \
     models/user.cpp
@@ -52,7 +59,6 @@ HEADERS += \
     login.h \
     mainwindow.h \
     flightmanager.h \
-    clickablelabel.h \
     seatdialog.h \
     ai.h \
     utils.h \
@@ -60,6 +66,14 @@ HEADERS += \
     forgotpassworddialog.h \
     emailsender.h \
     emailconfig.h \
+    dataanalyticswidget.h \
+    thememanager.h \
+    boardingpass.h \
+    notificationmanager.h \
+    languagemanager.h \
+    membersystem.h \
+    mapvisualization.h \
+    styleutils.h \
     # models/flight.h \
     # models/order.h \
     models/user.h

@@ -8,6 +8,9 @@
 #include <QUuid>       // 用于生成唯一订单号
 #include <QMessageBox> // 购票弹窗提示
 #include <QTimer>      // 用于延迟刷新（取消订单信号处理）
+#include <QScrollArea>
+#include <QVBoxLayout>
+#include <QFrame>
 #include "flight.h"    // 包含 Flight 数据结构
 #include "commondefs.h"// 订单类（需确保项目中有该头文件）
 
@@ -28,9 +31,11 @@ public:
     void loadFlightsToTable(const QList<Flight>& flights); // 加载航班数据到表格
     Flight getSelectedFlight();             // 获取选中的航班信息
     void setAdminMode(bool isAdminMode);    // 设置管理员模式（显示/隐藏增删改按钮）
+    void setCardViewMode(bool cardMode);    // 设置卡片视图模式（普通用户）
 
 signals:
     void orderCreated(); // 购票成功后通知 OrderManager 刷新订单列表
+    void flightCardClicked(const Flight& flight); // 卡片点击信号
 
 private slots:
     // 手动关联的业务槽函数
@@ -49,14 +54,23 @@ private slots:
 private:
     Ui::FlightManager *ui;                  // UI 指针
     bool m_isAdminMode = false;             // 管理员模式标记（C++11 就地初始化）
+    bool m_isCardViewMode = false;          // 卡片视图模式（普通用户）
     QString m_selectedSeat;                 // 选中的座位号（如 "1A"）
     QString m_currentFlightNo;              // 当前选中的航班号
     bool m_isManualClick = true;            // 标记是否为手动点击按钮（修复：移到 private 区域）
     QTimer *m_refreshTimer;                 // 延迟刷新定时器（可选，优化取消订单刷新）
+    
+    // 卡片视图相关
+    QScrollArea *m_cardScrollArea = nullptr;
+    QWidget *m_cardContainer = nullptr;
+    QList<Flight> m_currentFlights;         // 当前显示的航班列表
 
     // 私有工具函数
     void restoreSelectedFlight();           // 恢复选中的航班行（刷新后）
     QString generateOrderNumber();          // 生成唯一订单号（ORD+时间戳+UUID）
+    void applyModernStyle();                // 应用现代化样式
+    void loadFlightsToCards(const QList<Flight>& flights); // 加载航班到卡片视图
+    QFrame* createFlightCard(const Flight& flight);        // 创建单个航班卡片
 };
 
 #endif // FLIGHTMANAGER_H

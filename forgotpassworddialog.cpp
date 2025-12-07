@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "emailsender.h"
 #include "emailconfig.h"
+#include "thememanager.h"
 #include <QMessageBox>
 #include <QSqlQuery>
 #include <QSqlError>
@@ -11,15 +12,24 @@
 #include <QRandomGenerator>
 #include <QDateTime>
 #include <QDebug>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QGraphicsDropShadowEffect>
+#include <QPainter>
 
 ForgotPasswordDialog::ForgotPasswordDialog(QWidget *parent)
     : QDialog(parent), ui(new Ui::ForgotPasswordDialog),
-      m_codeExpirySeconds(0)
+      m_codeExpirySeconds(0), m_currentStep(0)
 {
     ui->setupUi(this);
     
     setWindowTitle("忘记密码");
     setModal(true);
+    setFixedSize(500, 550);
+    
+    // 应用磨砂玻璃效果背景
+    applyModernStyle();
     
     // 初始化邮件发送器
     m_emailSender = new EmailSender(this);
@@ -46,6 +56,119 @@ ForgotPasswordDialog::ForgotPasswordDialog(QWidget *parent)
     ui->txtNewPassword->setEnabled(false);
     ui->btnChangePassword->setEnabled(false);
     ui->lblCodeExpiry->setText("");
+    
+    // 初始化步骤指示器
+    updateStepIndicator(0);
+}
+
+void ForgotPasswordDialog::applyModernStyle()
+{
+    // 获取当前主题
+    bool isDark = ThemeManager::instance().isDarkMode();
+    
+    QString bgColor = isDark ? "rgba(30, 30, 30, 0.95)" : "rgba(255, 255, 255, 0.95)";
+    QString textColor = isDark ? "#E0E0E0" : "#333333";
+    QString secondaryText = isDark ? "#9E9E9E" : "#666666";
+    QString primaryColor = "#42A5F5";
+    QString borderColor = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
+    QString inputBg = isDark ? "#2D2D2D" : "#FAFAFA";
+    QString inputBorder = isDark ? "#424242" : "#E0E0E0";
+    
+    // 主窗口样式 - 磨砂玻璃效果
+    setStyleSheet(QString(R"(
+        QDialog {
+            background-color: %1;
+            border: 1px solid %2;
+            border-radius: 16px;
+        }
+        QLabel {
+            color: %3;
+            background: transparent;
+        }
+        QLineEdit {
+            background-color: %4;
+            border: 2px solid %5;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: %3;
+        }
+        QLineEdit:focus {
+            border-color: %6;
+        }
+        QLineEdit:disabled {
+            background-color: %7;
+            color: %8;
+        }
+        QPushButton {
+            background-color: %6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #1E88E5;
+        }
+        QPushButton:pressed {
+            background-color: #1565C0;
+        }
+        QPushButton:disabled {
+            background-color: %9;
+            color: %8;
+        }
+        QPushButton#btnCancel {
+            background-color: transparent;
+            color: %8;
+            border: 1px solid %5;
+        }
+        QPushButton#btnCancel:hover {
+            background-color: %10;
+        }
+    )").arg(bgColor, borderColor, textColor, inputBg, inputBorder, 
+            primaryColor, isDark ? "#1E1E1E" : "#F5F5F5", secondaryText,
+            isDark ? "#424242" : "#BDBDBD", isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"));
+    
+    // 添加阴影效果
+    QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(this);
+    shadow->setBlurRadius(30);
+    shadow->setColor(QColor(0, 0, 0, 60));
+    shadow->setOffset(0, 8);
+    setGraphicsEffect(shadow);
+}
+
+void ForgotPasswordDialog::updateStepIndicator(int step)
+{
+    m_currentStep = step;
+    
+    // 如果UI中有步骤指示器标签，更新它们
+    QString activeColor = "#42A5F5";
+    QString inactiveColor = ThemeManager::instance().isDarkMode() ? "#424242" : "#E0E0E0";
+    QString completedColor = "#4CAF50";
+    
+    // 更新步骤标签样式（如果存在）
+    QList<QLabel*> stepLabels = {
+        findChild<QLabel*>("lblStep1"),
+        findChild<QLabel*>("lblStep2"),
+        findChild<QLabel*>("lblStep3")
+    };
+    
+    for (int i = 0; i < stepLabels.size(); i++) {
+        if (stepLabels[i]) {
+            QString color;
+            if (i < step) {
+                color = completedColor; // 已完成
+            } else if (i == step) {
+                color = activeColor;    // 当前步骤
+            } else {
+                color = inactiveColor;  // 未开始
+            }
+            stepLabels[i]->setStyleSheet(QString("color: %1; font-weight: %2;")
+                .arg(color, i == step ? "bold" : "normal"));
+        }
+    }
 }
 
 ForgotPasswordDialog::~ForgotPasswordDialog() {
@@ -143,6 +266,9 @@ void ForgotPasswordDialog::onSendCodeClicked() {
         ui->txtCode->setEnabled(true);
         ui->btnVerify->setEnabled(true);
         
+        // 更新步骤指示器到第2步
+        updateStepIndicator(1);
+        
         updateCodeExpiryLabel();
         
         qDebug() << "验证码:" << m_generatedCode << "（仅用于测试，实际应发送到邮箱）";
@@ -173,10 +299,14 @@ void ForgotPasswordDialog::onVerifyClicked() {
     ui->txtCode->setEnabled(false);
     ui->btnVerify->setEnabled(false);
     ui->lblCodeExpiry->setText("✓ 验证成功");
+    ui->lblCodeExpiry->setStyleSheet("color: #4CAF50; font-weight: bold;");
     
     // 启用新密码输入和修改按钮
     ui->txtNewPassword->setEnabled(true);
     ui->btnChangePassword->setEnabled(true);
+    
+    // 更新步骤指示器到第3步
+    updateStepIndicator(2);
 }
 
 void ForgotPasswordDialog::onChangePasswordClicked() {

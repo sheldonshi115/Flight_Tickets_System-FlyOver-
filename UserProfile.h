@@ -5,11 +5,18 @@
 #include <QPixmap>
 #include <QPainter>
 #include <QPainterPath>
+
 // 定义性别枚举
 enum Gender {
     Male = 0,
     Female = 1,
     Unknown = 2
+};
+
+// 定义用户角色枚举
+enum class UserRole {
+    User = 0,   // 普通用户
+    Admin = 1   // 管理员
 };
 
 // 用户信息结构体
@@ -20,8 +27,13 @@ struct UserProfile {
     QString phone;      // 手机号
     QString email;      // 邮箱
     QPixmap avatar;     // 头像图片
+    UserRole role = UserRole::User; // 用户角色，默认普通用户
+    
+    // 辅助方法
+    bool isAdmin() const { return role == UserRole::Admin; }
 };
-static QPixmap getRoundPixmap(const QPixmap& src, QSize size) {
+
+[[maybe_unused]] static QPixmap getRoundPixmap(const QPixmap& src, QSize size) {
     if (src.isNull()) return QPixmap();
 
     // 1. 缩放图片（平滑缩放，填充目标大小）

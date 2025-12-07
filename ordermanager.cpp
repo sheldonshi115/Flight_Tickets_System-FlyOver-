@@ -7,13 +7,17 @@
 #include <QDateTime>
 #include <QUuid>
 #include <QDebug>
-#include <QTimer> // 新增：延迟恢复按钮
+#include <QTimer>
+#include <QGraphicsDropShadowEffect>
 
 OrderManager::OrderManager(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::OrderManager)
 {
     ui->setupUi(this);
+
+    // 应用现代化样式
+    applyModernStyle();
 
     // 1. 初始化表格
     setupTableView();
@@ -33,6 +37,7 @@ OrderManager::OrderManager(QWidget *parent) :
         on_btnCancelOrder_clicked();
     });
     connect(ui->btnViewDetail, &QPushButton::clicked, this, &OrderManager::on_btnViewDetail_clicked);
+    connect(ui->btnCloseDetail, &QPushButton::clicked, this, &OrderManager::on_btnCloseDetail_clicked);
     connect(ui->btnExit, &QPushButton::clicked, this, &OrderManager::on_btnExit_clicked);
     connect(ui->twOrderList, &QTableWidget::itemSelectionChanged,
             this, &OrderManager::on_twOrderList_itemSelectionChanged);
@@ -67,6 +72,39 @@ void OrderManager::setupTableView()
     ui->twOrderList->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->twOrderList->hideColumn(0);
     ui->twOrderList->setAlternatingRowColors(true);
+    
+    // 现代化表格样式
+    ui->twOrderList->setStyleSheet(R"(
+        QTableWidget {
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            gridline-color: #f0f0f0;
+            font-size: 13px;
+        }
+        QTableWidget::item {
+            padding: 12px 8px;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        QTableWidget::item:selected {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        QTableWidget::item:hover {
+            background-color: #f5f5f5;
+        }
+        QHeaderView::section {
+            background-color: #f8f9fa;
+            color: #555;
+            font-weight: bold;
+            padding: 12px 8px;
+            border: none;
+            border-bottom: 2px solid #e0e0e0;
+        }
+    )");
+    
+    ui->twOrderList->verticalHeader()->setVisible(false);
+    ui->twOrderList->setShowGrid(false);
 }
 
 void OrderManager::loadOrdersToTable(const QList<Order>& orders)
@@ -370,6 +408,11 @@ void OrderManager::on_btnViewDetail_clicked()
     ui->valSeat->setText(selected.seatNumber());
 }
 
+void OrderManager::on_btnCloseDetail_clicked()
+{
+    ui->gbOrderDetails->setVisible(false);
+}
+
 void OrderManager::on_btnExit_clicked()
 {
     QWidget *mainWindow = this->topLevelWidget();
@@ -440,4 +483,183 @@ void OrderManager::on_twOrderList_itemSelectionChanged()
 
     ui->btnCancelOrder->setEnabled(hasSelection);
     ui->btnViewDetail->setEnabled(hasSelection);
+}
+
+// 现代化样式应用
+void OrderManager::applyModernStyle()
+{
+    // 整体背景
+    this->setStyleSheet(R"(
+        QWidget {
+            background-color: #f5f7fa;
+            font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+        }
+    )");
+    
+    // 标题样式（如果存在标题标签）
+    QList<QLabel*> labels = this->findChildren<QLabel*>();
+    for (QLabel* label : labels) {
+        if (label->objectName().contains("title", Qt::CaseInsensitive) || 
+            label->text().contains("订单")) {
+            label->setStyleSheet(R"(
+                font-size: 24px;
+                font-weight: bold;
+                color: #333;
+                padding: 16px 0;
+                background: transparent;
+            )");
+        }
+    }
+    
+    // 筛选区域样式
+    if (ui->leFlightNum) {
+        ui->leFlightNum->setStyleSheet(R"(
+            QLineEdit {
+                border: 2px solid #e0e0e0;
+                border-radius: 6px;
+                padding: 10px 14px;
+                font-size: 13px;
+                background-color: #fff;
+            }
+            QLineEdit:focus {
+                border-color: #1976d2;
+            }
+        )");
+        ui->leFlightNum->setPlaceholderText("输入航班号筛选...");
+    }
+    
+    if (ui->deOrderDate) {
+        ui->deOrderDate->setStyleSheet(R"(
+            QDateEdit {
+                border: 2px solid #e0e0e0;
+                border-radius: 6px;
+                padding: 10px 14px;
+                font-size: 13px;
+                background-color: #fff;
+            }
+            QDateEdit:focus {
+                border-color: #1976d2;
+            }
+            QDateEdit::drop-down {
+                border: none;
+                width: 24px;
+            }
+        )");
+    }
+    
+    if (ui->cbxOrderStatus) {
+        ui->cbxOrderStatus->setStyleSheet(R"(
+            QComboBox {
+                border: 2px solid #e0e0e0;
+                border-radius: 6px;
+                padding: 10px 14px;
+                font-size: 13px;
+                background-color: #fff;
+            }
+            QComboBox:focus {
+                border-color: #1976d2;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 24px;
+            }
+        )");
+    }
+    
+    // 按钮样式
+    QString primaryBtnStyle = R"(
+        QPushButton {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #1565c0;
+        }
+        QPushButton:pressed {
+            background-color: #0d47a1;
+        }
+        QPushButton:disabled {
+            background-color: #bdbdbd;
+        }
+    )";
+    
+    QString secondaryBtnStyle = R"(
+        QPushButton {
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 13px;
+        }
+        QPushButton:hover {
+            background-color: #e0e0e0;
+            border-color: #ccc;
+        }
+    )";
+    
+    QString dangerBtnStyle = R"(
+        QPushButton {
+            background-color: #e53935;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #c62828;
+        }
+        QPushButton:disabled {
+            background-color: #bdbdbd;
+        }
+    )";
+    
+    if (ui->btnQuery) {
+        ui->btnQuery->setStyleSheet(primaryBtnStyle);
+        ui->btnQuery->setCursor(Qt::PointingHandCursor);
+    }
+    if (ui->btnReset) {
+        ui->btnReset->setStyleSheet(secondaryBtnStyle);
+        ui->btnReset->setCursor(Qt::PointingHandCursor);
+    }
+    if (ui->btnCancelOrder) {
+        ui->btnCancelOrder->setStyleSheet(dangerBtnStyle);
+        ui->btnCancelOrder->setCursor(Qt::PointingHandCursor);
+    }
+    if (ui->btnViewDetail) {
+        ui->btnViewDetail->setStyleSheet(primaryBtnStyle);
+        ui->btnViewDetail->setCursor(Qt::PointingHandCursor);
+    }
+    if (ui->btnExit) {
+        ui->btnExit->setStyleSheet(secondaryBtnStyle);
+        ui->btnExit->setCursor(Qt::PointingHandCursor);
+    }
+    
+    // 订单详情区域
+    if (ui->gbOrderDetails) {
+        ui->gbOrderDetails->setStyleSheet(R"(
+            QGroupBox {
+                background-color: #fff;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                margin-top: 16px;
+                padding: 16px;
+                font-weight: bold;
+                color: #333;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 16px;
+                padding: 0 8px;
+                color: #1976d2;
+            }
+        )");
+    }
 }

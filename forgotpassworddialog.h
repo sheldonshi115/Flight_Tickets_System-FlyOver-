@@ -33,12 +33,15 @@ private:
     QString m_userEmail;                 // 存储用户输入的邮箱
     int m_codeExpirySeconds;            // 验证码过期倒计时
     QTimer *m_verificationTimer;        // 验证码倒计时计时器
+    int m_currentStep;                  // 当前步骤 (0: 输入邮箱, 1: 验证码, 2: 新密码)
     
     // 邮件发送相关
     bool sendVerificationEmail(const QString &email, const QString &code);
     QString generateVerificationCode();  // 生成随机验证码
     void updateCodeExpiryLabel();       // 更新过期时间显示
     void resetUI();                     // 重置UI
+    void applyModernStyle();            // 应用现代磨砂玻璃样式
+    void updateStepIndicator(int step); // 更新步骤指示器
 };
 
 #endif // FORGOTPASSWORDDIALOG_H
