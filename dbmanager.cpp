@@ -9,10 +9,10 @@
 #include <QFile>
 
 // 使用你的数据库配置
-const QString DBManager::DB_NAME = "login_db";
+const QString DBManager::DB_NAME = "flight_ticket_db";
 const QString DBManager::DB_HOST = "localhost";
 const QString DBManager::DB_USER = "root";       // 你的MySQL用户名
-const QString DBManager::DB_PWD = "woshinidie1218"; // 你的MySQL密码
+const QString DBManager::DB_PWD = "Srt13141314@"; // 你的MySQL密码
 const int DBManager::DB_PORT = 3306;             // 默认端口
 
 // 单例模式：静态实例
@@ -86,11 +86,11 @@ void DBManager::insertTestFlights()
         "9C", "SQ", "TG", "JL", "NH"
     };
 
-    // 循环生成10000条航班数据
-    for (int i = 0; i < 10000; ++i) {
+    // 循环生成300条航班数据
+    for (int i = 0; i < 300; ++i) {
         // 生成唯一航班号
         QString prefix = flightPrefixes[rand() % flightPrefixes.size()];
-        int num = (i % 999) + 1;
+        int num = (i % 300) + 1;
         QString flightNum = QString("%1%2").arg(prefix).arg(num, 3, 10, QChar('0'));
 
         // 随机出发地和目的地（避免相同）
@@ -192,11 +192,11 @@ bool DBManager::initDatabase()
         // 检查并插入测试数据
         if(query.exec("SELECT COUNT(*) FROM flights")&&query.next()){
             int dataCount = query.value(0).toInt();
-            if(dataCount < 10000){
+            if(dataCount < 300){
                 insertTestFlights();
-                qDebug()<<"已在表中插入了10000条初始航班数据!";
+                qDebug()<<"已在表中插入了300条初始航班数据!";
             }else{
-                qDebug()<<"flights 已有10000条数据";
+                qDebug()<<"flights 已有300条数据";
             }
         }else{
             qWarning()<<"查询航班表数据失败"<<query.lastError().text();

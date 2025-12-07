@@ -16,7 +16,7 @@
 // 替换为你的实际配置
 const char* EmailConfig::SMTP_SERVER = "smtp.qq.com";
 const int EmailConfig::SMTP_PORT = 465;
-const char* EmailConfig::FROM_EMAIL = "1732843954@qq.com";              // 替换为你的 QQ 邮箱（发件人）
+const char* EmailConfig::FROM_EMAIL = "";              // 替换为你的 QQ 邮箱（发件人）
 const char* EmailConfig::FROM_NAME = "飞越订票系统";                        // 发件人显示名称
 const char* EmailConfig::AUTH_CODE = "xvlxrgyykqafeaci";                      // 替换为你的授权码
 const bool EmailConfig::USE_SSL = true;
