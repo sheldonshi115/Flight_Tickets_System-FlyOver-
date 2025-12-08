@@ -201,10 +201,11 @@ void MapVisualization::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     
-    // 背景渐变
+    // 背景渐变 - 更现代的蓝色渐变
     QLinearGradient bgGradient(0, 0, 0, height());
-    bgGradient.setColorAt(0, QColor(240, 249, 255));
-    bgGradient.setColorAt(1, QColor(224, 242, 254));
+    bgGradient.setColorAt(0, QColor(235, 248, 255));  // 更浅的蓝
+    bgGradient.setColorAt(0.5, QColor(219, 241, 255)); // 中间色调
+    bgGradient.setColorAt(1, QColor(207, 237, 255));  // 底部颜色
     painter.fillRect(rect(), bgGradient);
     
     drawMap(painter);
@@ -247,26 +248,32 @@ void MapVisualization::drawCities(QPainter& painter)
         
         bool isHovered = (it.key() == m_hoveredCity);
         
-        // 绘制城市点
+        // 绘制城市点 - 增强视觉效果
         if (isHovered) {
-            painter.setPen(QPen(QColor(59, 130, 246), 3));
+            // 悬停时：外圈光晕效果
+            painter.setPen(QPen(QColor(59, 130, 246, 100), 6));
+            painter.setBrush(Qt::NoBrush);
+            painter.drawEllipse(pos, 12, 12);
+            
+            painter.setPen(QPen(QColor(37, 99, 235), 3));
             painter.setBrush(QColor(96, 165, 250));
         } else {
-            painter.setPen(QPen(QColor(100, 100, 100), 2));
+            painter.setPen(QPen(QColor(37, 99, 235), 2.5));
             painter.setBrush(QColor(59, 130, 246));
         }
         
-        double radius = isHovered ? 8 : 6;
+        double radius = isHovered ? 9 : 7;
         painter.drawEllipse(pos, radius, radius);
         
-        // 绘制城市名称
-        painter.setPen(QColor(71, 85, 105));
+        // 绘制城市名称 - 更清晰的字体
+        painter.setPen(QColor(30, 58, 138));
         QFont font = painter.font();
-        font.setPointSize(isHovered ? 10 : 9);
+        font.setPointSize(isHovered ? 11 : 9);
         font.setBold(isHovered);
+        font.setFamily("Microsoft YaHei UI");
         painter.setFont(font);
         
-        painter.drawText(QRectF(pos.x() - 40, pos.y() + 10, 80, 20),
+        painter.drawText(QRectF(pos.x() - 40, pos.y() + 12, 80, 20),
                         Qt::AlignCenter, it->cityName);
     }
 }
@@ -285,14 +292,14 @@ void MapVisualization::drawRoutes(QPainter& painter)
         QString routeKey = route.departure + "-" + route.destination;
         bool isHighlighted = (routeKey == m_highlightedRoute);
         
-        // 绘制航线
+        // 绘制航线 - 增强颜色对比
         QPen pen;
         if (isHighlighted) {
-            pen = QPen(QColor(239, 68, 68), 3);
+            pen = QPen(QColor(239, 68, 68), 3.5);  // 高亮航线：红色
         } else if (route.isPopular) {
-            pen = QPen(QColor(59, 130, 246, 150), 2);
+            pen = QPen(QColor(59, 130, 246, 180), 2.5);  // 热门航线：深蓝
         } else {
-            pen = QPen(QColor(148, 163, 184, 80), 1);
+            pen = QPen(QColor(148, 163, 184, 120), 1.5);  // 普通航线：灰色
         }
         
         painter.setPen(pen);

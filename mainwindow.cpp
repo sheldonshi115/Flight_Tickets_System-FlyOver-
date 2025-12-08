@@ -51,14 +51,20 @@ MainWindow::MainWindow(QWidget *parent) :
     if (!m_orderManager) {
         m_orderManager = new OrderManager(ui->stackedWidget);
         ui->stackedWidget->addWidget(m_orderManager);
+        qDebug() << "[MainWindow] OrderManager 已初始化";
     }
 
     setWindowTitle(QString::fromUtf8("航班票务系统 - FlyOver"));
-    setIsAdmin(false); // 默认为普通用户，登录后根据实际角色更新
-    // 注意：account 会在登录成功后通过 setUserProfile 被设置
+    
+    // 初始化用户信息（在调用 initHomePage 之前）
     m_appUser.account = "";
     m_appUser.nickname = "用户";
     m_appUser.gender = Gender::Unknown;
+    m_appUser.phone = "";
+    m_appUser.email = "";
+    m_appUser.avatar = QPixmap(":/images/default_avatar.jpg");
+    
+    setIsAdmin(false); // 默认为普通用户，登录后根据实际角色更新
     
     // 强制应用浅色主题（不受系统深色模式影响）
     ThemeManager::instance().forceLightTheme();
@@ -71,10 +77,6 @@ MainWindow::MainWindow(QWidget *parent) :
         initLanguageSwitch();
         initNotificationSystem();
     });
-    
-    m_appUser.phone = "";
-    m_appUser.email = "";
-    m_appUser.avatar = QPixmap(":/images/default_avatar.jpg");
 
     // 创建浮动小球 AI 按钮（初始在主窗口左侧隐藏）
     m_floatingAIButton = new QPushButton(this);
@@ -144,20 +146,39 @@ void MainWindow::set_account(QString acc){
 
 void MainWindow::setUserProfile(const UserProfile& profile) {
     m_appUser = profile;
-    qDebug() << "MainWindow::setUserProfile 被调用"
+    qDebug() << "[MainWindow] setUserProfile 被调用"
              << "account=" << profile.account
              << "nickname=" << profile.nickname
              << "phone=" << profile.phone
              << "email=" << profile.email
              << "role=" << (profile.isAdmin() ? "Admin" : "User");
     
+    // 更新主页面显示的用户信息
+    updateMemberInfo();
+    
     // 根据用户角色设置权限
     setIsAdmin(profile.isAdmin());
 }
 MainWindow::~MainWindow()
 {
+    qDebug() << "[MainWindow] 析构函数被调用";
+    
+    // 安全删除浮动按钮和动画
+    if (m_floatingAnim) {
+        m_floatingAnim->stop();
+        delete m_floatingAnim;
+        m_floatingAnim = nullptr;
+    }
+    if (m_floatingAIButton) {
+        delete m_floatingAIButton;
+        m_floatingAIButton = nullptr;
+    }
+    
+    // stackedWidget 会自动清理其子控件
+    // m_flightManager、m_orderManager、m_dataAnalytics 都是 stackedWidget 的子级
+    // 不需要手动删除
+    
     delete ui;
-    // 无需手动删除m_flightManager（父对象为stackedWidget，会自动释放）
 }
 
 // 实现权限设置函数 - 根据用户角色显示不同界面
@@ -189,11 +210,11 @@ void MainWindow::setIsAdmin(bool isAdmin)
         
         // 安全检查：确保 sideBar 存在
         if (ui->sideBar) {
-            // 管理员侧边栏按钮样式 - 深海蓝主题
+            // 管理员侧边栏按钮样式 - 与用户模式一致（黑色文字）
             QString adminSidebarStyle = R"(
                 QPushButton {
                     background-color: transparent;
-                    color: #E0E0E0;
+                    color: #333333;
                     border: none;
                     border-radius: 8px;
                     text-align: left;
@@ -201,10 +222,10 @@ void MainWindow::setIsAdmin(bool isAdmin)
                     font-size: 14px;
                 }
                 QPushButton:hover {
-                    background-color: rgba(52, 152, 219, 0.2);
+                    background-color: rgba(59, 130, 246, 0.1);
                 }
                 QPushButton:pressed {
-                    background-color: rgba(52, 152, 219, 0.3);
+                    background-color: rgba(59, 130, 246, 0.2);
                 }
             )";
             
@@ -320,11 +341,16 @@ void MainWindow::on_actionFlightManager_triggered()
         ui->stackedWidget->addWidget(m_flightManager);
 
         // 【新增】连接信号（管理员模式购票也需要同步订单）
-        connect(m_flightManager, &FlightManager::orderCreated,
-                m_orderManager, &OrderManager::refreshOrderList);
+        // 确保 m_orderManager 存在后再连接
+        if (m_orderManager) {
+            connect(m_flightManager, &FlightManager::orderCreated,
+                    m_orderManager, &OrderManager::refreshOrderList);
+        }
     }
-    m_flightManager->setAdminMode(true); // 管理员模式
-    ui->stackedWidget->setCurrentWidget(m_flightManager);
+    if (m_flightManager) {
+        m_flightManager->setAdminMode(true); // 管理员模式
+        ui->stackedWidget->setCurrentWidget(m_flightManager);
+    }
 }
 void MainWindow::on_btnFlightQuery_clicked()
 {
@@ -333,27 +359,38 @@ void MainWindow::on_btnFlightQuery_clicked()
         ui->stackedWidget->addWidget(m_flightManager);
 
         // 【新增】连接FlightManager的订单创建信号到OrderManager的刷新方法
-        connect(m_flightManager, &FlightManager::orderCreated,
-                m_orderManager, &OrderManager::refreshOrderList);
+        // 确保 m_orderManager 存在后再连接
+        if (m_orderManager) {
+            connect(m_flightManager, &FlightManager::orderCreated,
+                    m_orderManager, &OrderManager::refreshOrderList);
+        }
     }
-    m_flightManager->setAdminMode(false); // 普通查询模式
-    ui->stackedWidget->setCurrentWidget(m_flightManager);
+    if (m_flightManager) {
+        m_flightManager->setAdminMode(false); // 普通查询模式
+        ui->stackedWidget->setCurrentWidget(m_flightManager);
+    }
 }
-void MainWindow::on_btnOrderManager_clicked() // 假设主窗口有“订单管理”按钮
+void MainWindow::on_btnOrderManager_clicked() // 假设主窗口有"订单管理"按钮
 {
     if (!m_orderManager) {
         m_orderManager = new OrderManager(ui->stackedWidget);
         ui->stackedWidget->addWidget(m_orderManager);
+        qDebug() << "[MainWindow] OrderManager 延迟创建";
     }
-    ui->stackedWidget->setCurrentWidget(m_orderManager);
+    if (m_orderManager) {
+        ui->stackedWidget->setCurrentWidget(m_orderManager);
+    }
 }
 void MainWindow::on_btnOrders_clicked()
 {
     if (!m_orderManager) {
         m_orderManager = new OrderManager(ui->stackedWidget);
         ui->stackedWidget->addWidget(m_orderManager);
+        qDebug() << "[MainWindow] OrderManager 延迟创建";
     }
-    ui->stackedWidget->setCurrentWidget(m_orderManager);
+    if (m_orderManager) {
+        ui->stackedWidget->setCurrentWidget(m_orderManager);
+    }
 }
 
 // 数据分析按钮点击事件
@@ -362,8 +399,11 @@ void MainWindow::on_btnDataAnalytics_clicked()
     if (!m_dataAnalytics) {
         m_dataAnalytics = new DataAnalyticsWidget(ui->stackedWidget);
         ui->stackedWidget->addWidget(m_dataAnalytics);
+        qDebug() << "[MainWindow] DataAnalyticsWidget 已创建";
     }
-    ui->stackedWidget->setCurrentWidget(m_dataAnalytics);
+    if (m_dataAnalytics) {
+        ui->stackedWidget->setCurrentWidget(m_dataAnalytics);
+    }
 }
 
 // 新增：退出登录逻辑
@@ -378,12 +418,19 @@ void MainWindow::on_actionLogout_triggered()
         return;
     }
 
-    // 创建登录窗口（无父对象，避免被主窗口关闭影响）
-    LoginDialog *loginDialog = new LoginDialog();
-    loginDialog->setAttribute(Qt::WA_DeleteOnClose);
-    loginDialog->show(); // 先显示登录窗口
+    qDebug() << "[MainWindow] 用户退出登录，关闭主窗口";
 
-    this->close(); // 再关闭主窗口（此时登录窗口已存在，程序不退出）
+    // 创建登录窗口（无父对象，避免被主窗口关闭影响）
+    LoginDialog *loginDialog = new LoginDialog(nullptr);
+    loginDialog->setAttribute(Qt::WA_DeleteOnClose);
+    
+    // 先显示登录窗口
+    loginDialog->show();
+    
+    qDebug() << "[MainWindow] 登录窗口已显示，即将关闭主窗口";
+
+    // 使用 deleteLater 延迟删除，避免立即关闭导致的问题
+    this->deleteLater();
 }
 void MainWindow::clicked_btnProfile(){
     qDebug() << "clicked_btnProfile: m_appUser.account=" << m_appUser.account;
@@ -656,12 +703,27 @@ void MainWindow::initHomePage()
 {
     // 创建会员信息卡片内容
     QFrame* memberCard = ui->memberInfoCard;
-    QVBoxLayout* cardLayout = new QVBoxLayout(memberCard);
-    cardLayout->setContentsMargins(30, 20, 30, 20);
+    
+    // 检查是否已经有布局，避免重复创建
+    QVBoxLayout* cardLayout = qobject_cast<QVBoxLayout*>(memberCard->layout());
+    if (cardLayout) {
+        // 如果已经有布局，清空所有子控件
+        QLayoutItem* item;
+        while ((item = cardLayout->takeAt(0)) != nullptr) {
+            if (item->widget()) {
+                item->widget()->deleteLater();
+            }
+            delete item;
+        }
+    } else {
+        // 第一次创建布局
+        cardLayout = new QVBoxLayout(memberCard);
+        cardLayout->setContentsMargins(30, 20, 30, 20);
+    }
     
     // 欢迎标签
     QLabel* welcomeLabel = new QLabel(QString::fromUtf8("你好，") + m_appUser.nickname, memberCard);
-    welcomeLabel->setStyleSheet("font-size: 28px; font-weight: bold; color: #1E40AF; font-family: 'Microsoft YaHei UI', 'SimHei';");
+    welcomeLabel->setStyleSheet("font-size: 28px; font-weight: bold; color: #1E40AF; font-family: 'Microsoft YaHei UI', 'SimHei'; background: transparent;");
     cardLayout->addWidget(welcomeLabel);
     
     // 会员信息水平布局
@@ -671,9 +733,9 @@ void MainWindow::initHomePage()
     // 会员等级
     QVBoxLayout* levelLayout = new QVBoxLayout();
     QLabel* levelTitle = new QLabel(QString::fromUtf8("会员等级"), memberCard);
-    levelTitle->setStyleSheet("font-size: 12px; color: #64748B;");
+    levelTitle->setStyleSheet("font-size: 12px; color: #64748B; background: transparent;");
     m_memberLevelLabel = new QLabel(QString::fromUtf8("🥉 青铜会员"), memberCard);
-    m_memberLevelLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #1E40AF;");
+    m_memberLevelLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #1E40AF; background: transparent;");
     levelLayout->addWidget(levelTitle);
     levelLayout->addWidget(m_memberLevelLabel);
     infoLayout->addLayout(levelLayout);
@@ -681,9 +743,9 @@ void MainWindow::initHomePage()
     // 积分
     QVBoxLayout* pointsLayout = new QVBoxLayout();
     QLabel* pointsTitle = new QLabel(QString::fromUtf8("积分"), memberCard);
-    pointsTitle->setStyleSheet("font-size: 12px; color: #64748B;");
+    pointsTitle->setStyleSheet("font-size: 12px; color: #64748B; background: transparent;");
     m_pointsLabel = new QLabel("0", memberCard);
-    m_pointsLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #1E40AF;");
+    m_pointsLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #1E40AF; background: transparent;");
     pointsLayout->addWidget(pointsTitle);
     pointsLayout->addWidget(m_pointsLabel);
     infoLayout->addLayout(pointsLayout);
@@ -691,9 +753,9 @@ void MainWindow::initHomePage()
     // 飞机币余额
     QVBoxLayout* balanceLayout = new QVBoxLayout();
     QLabel* balanceTitle = new QLabel(QString::fromUtf8("飞机币余额"), memberCard);
-    balanceTitle->setStyleSheet("font-size: 12px; color: #64748B;");
+    balanceTitle->setStyleSheet("font-size: 12px; color: #64748B; background: transparent;");
     m_balanceLabel = new QLabel(QString::fromUtf8("¥10,000"), memberCard);
-    m_balanceLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #10B981;");
+    m_balanceLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #10B981; background: transparent;");
     balanceLayout->addWidget(balanceTitle);
     balanceLayout->addWidget(m_balanceLabel);
     infoLayout->addLayout(balanceLayout);
@@ -701,9 +763,9 @@ void MainWindow::initHomePage()
     // 飞行里程
     QVBoxLayout* mileageLayout = new QVBoxLayout();
     QLabel* mileageTitle = new QLabel(QString::fromUtf8("飞行里程"), memberCard);
-    mileageTitle->setStyleSheet("font-size: 12px; color: #64748B;");
+    mileageTitle->setStyleSheet("font-size: 12px; color: #64748B; background: transparent;");
     m_mileageLabel = new QLabel("0 km", memberCard);
-    m_mileageLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #1E40AF;");
+    m_mileageLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #1E40AF; background: transparent;");
     mileageLayout->addWidget(mileageTitle);
     mileageLayout->addWidget(m_mileageLabel);
     infoLayout->addLayout(mileageLayout);
@@ -725,9 +787,24 @@ void MainWindow::initHomePage()
 void MainWindow::createQuickActionButtons()
 {
     QFrame* actionsFrame = ui->quickActionsFrame;
-    QHBoxLayout* layout = new QHBoxLayout(actionsFrame);
-    layout->setSpacing(20);
-    layout->setContentsMargins(40, 10, 40, 10);
+    
+    // 检查是否已经有布局，避免重复创建
+    QHBoxLayout* layout = qobject_cast<QHBoxLayout*>(actionsFrame->layout());
+    if (layout) {
+        // 如果已经有布局，清空所有子控件
+        QLayoutItem* item;
+        while ((item = layout->takeAt(0)) != nullptr) {
+            if (item->widget()) {
+                item->widget()->deleteLater();
+            }
+            delete item;
+        }
+    } else {
+        // 第一次创建布局
+        layout = new QHBoxLayout(actionsFrame);
+        layout->setSpacing(20);
+        layout->setContentsMargins(40, 10, 40, 10);
+    }
     
     // 快捷按钮样式
     QString buttonStyle = R"(

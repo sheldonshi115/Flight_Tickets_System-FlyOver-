@@ -1,6 +1,8 @@
 #include "ProfileDisplayDialog.h"
+#include "login.h"
 #include <QMessageBox>
 #include <QMainWindow>
+#include <QDebug>
 
 ProfileDisplayDialog::ProfileDisplayDialog(QWidget *parent)
     : QDialog(parent), ui(new Ui::ProfileDisplayDialog) {
@@ -116,10 +118,12 @@ void ProfileDisplayDialog::on_btnLogout_clicked() {
     );
     
     if (reply == QMessageBox::Yes) {
+        qDebug() << "[ProfileDisplayDialog] 用户确认退出登录";
+        
         // 关闭个人信息窗口
         this->reject();
         
-        // 查找主窗口并关闭
+        // 查找主窗口
         QWidget *mainWindow = nullptr;
         QWidget *current = this->parentWidget();
         while (current) {
@@ -131,7 +135,17 @@ void ProfileDisplayDialog::on_btnLogout_clicked() {
         }
         
         if (mainWindow) {
-            mainWindow->close();
+            qDebug() << "[ProfileDisplayDialog] 找到主窗口，创建登录窗口";
+            
+            // 创建新的登录窗口
+            LoginDialog *loginDialog = new LoginDialog(nullptr);
+            loginDialog->setAttribute(Qt::WA_DeleteOnClose);
+            loginDialog->show();
+            
+            qDebug() << "[ProfileDisplayDialog] 登录窗口已显示，删除主窗口";
+            
+            // 使用 deleteLater 延迟删除主窗口
+            mainWindow->deleteLater();
         }
     }
 }

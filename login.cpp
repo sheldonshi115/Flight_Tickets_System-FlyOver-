@@ -21,6 +21,7 @@
 #include <QPainterPath>
 #include <QSettings>
 #include <QRandomGenerator>
+#include <QDebug>
 #include <cmath>
 
 // ========== ParticlePanel 实现 (性能优化版) ==========
@@ -125,20 +126,36 @@ LoginDialog::LoginDialog(QWidget *parent) :
     registerDialog(nullptr),
     m_particlePanel(nullptr)
 {
+    qDebug() << "[LoginDialog] 构造函数被调用";
+    
     ui->setupUi(this);
     setWindowTitle("登录 - 航班票务系统");
     setFixedSize(850, 520);
     
-    // 创建主水平布局
-    QWidget *mainContainer = new QWidget(this);
-    mainContainer->setGeometry(0, 0, 850, 520);
+    // 隐藏 UI 文件中的默认布局内容
+    if (ui->titleLabel) ui->titleLabel->hide();
+    if (ui->accountLabel) ui->accountLabel->hide();
+    if (ui->passwordLabel) ui->passwordLabel->hide();
     
-    QHBoxLayout *mainLayout = new QHBoxLayout(mainContainer);
+    // 清除 UI 文件中的默认布局，创建新的自定义布局
+    if (layout()) {
+        QLayoutItem *item;
+        while ((item = layout()->takeAt(0)) != nullptr) {
+            if (item->widget()) {
+                item->widget()->hide();
+            }
+            delete item;
+        }
+        delete layout();
+    }
+    
+    // 创建主水平布局
+    QHBoxLayout *mainLayout = new QHBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
     
     // ========== 左侧粒子动画区域 (蓝紫渐变 + 粒子) ==========
-    m_particlePanel = new ParticlePanel();
+    m_particlePanel = new ParticlePanel(this);
     m_particlePanel->setFixedWidth(380);
     m_particlePanel->setMinimumHeight(520);
     
@@ -147,12 +164,12 @@ LoginDialog::LoginDialog(QWidget *parent) :
     leftLayout->setSpacing(20);
     
     // 飞机图标
-    QLabel *iconLabel = new QLabel("✈");
+    QLabel *iconLabel = new QLabel("✈", m_particlePanel);
     iconLabel->setStyleSheet("font-size: 72px; color: white; background: transparent;");
     iconLabel->setAlignment(Qt::AlignCenter);
     
     // 系统名称
-    QLabel *brandLabel = new QLabel("FlyOver");
+    QLabel *brandLabel = new QLabel("FlyOver", m_particlePanel);
     brandLabel->setStyleSheet(R"(
         font-size: 42px; 
         font-weight: bold; 
@@ -169,7 +186,7 @@ LoginDialog::LoginDialog(QWidget *parent) :
     brandLabel->setGraphicsEffect(brandShadow);
     
     // Slogan
-    QLabel *sloganLabel = new QLabel("探索世界，从这里起飞");
+    QLabel *sloganLabel = new QLabel("探索世界，从这里起飞", m_particlePanel);
     sloganLabel->setStyleSheet(R"(
         font-size: 18px; 
         color: #FFFFFF; 
@@ -188,7 +205,8 @@ LoginDialog::LoginDialog(QWidget *parent) :
     QLabel *featuresLabel = new QLabel(
         "🎫 便捷购票 · 智能推荐\n"
         "📊 数据分析 · 一目了然\n"
-        "💡 AI 助手 · 贴心服务"
+        "💡 AI 助手 · 贴心服务",
+        m_particlePanel
     );
     featuresLabel->setStyleSheet(R"(
         font-size: 14px; 
@@ -213,7 +231,7 @@ LoginDialog::LoginDialog(QWidget *parent) :
     leftLayout->addStretch(2);
     
     // ========== 右侧表单区域 ==========
-    QWidget *rightPanel = new QWidget();
+    QWidget *rightPanel = new QWidget(this);
     rightPanel->setStyleSheet(R"(
         QWidget {
             background-color: #ffffff;
@@ -227,10 +245,10 @@ LoginDialog::LoginDialog(QWidget *parent) :
     rightLayout->setSpacing(16);
     
     // 欢迎标题
-    QLabel *welcomeLabel = new QLabel("欢迎使用！");
+    QLabel *welcomeLabel = new QLabel("欢迎使用！", rightPanel);
     welcomeLabel->setStyleSheet("font-size: 28px; font-weight: bold; color: #333; background: transparent;");
     
-    QLabel *subtitleLabel = new QLabel("请登录您的账号");
+    QLabel *subtitleLabel = new QLabel("请登录您的账号", rightPanel);
     subtitleLabel->setStyleSheet(R"(
         font-size: 15px; 
         color: #666; 
@@ -242,7 +260,7 @@ LoginDialog::LoginDialog(QWidget *parent) :
     subtitleLabel->setMinimumHeight(48);
     
     // 账号输入
-    QLabel *accountLabel = new QLabel("账号");
+    QLabel *accountLabel = new QLabel("账号", rightPanel);
     accountLabel->setStyleSheet("font-size: 13px; color: #555; font-weight: 500; background: transparent;");
     
     // 使用原有的accountEdit
@@ -265,7 +283,7 @@ LoginDialog::LoginDialog(QWidget *parent) :
     ui->accountEdit->setMinimumHeight(48);
     
     // 密码输入
-    QLabel *passwordLabel = new QLabel("密码");
+    QLabel *passwordLabel = new QLabel("密码", rightPanel);
     passwordLabel->setStyleSheet("font-size: 13px; color: #555; font-weight: 500; background: transparent;");
     
     ui->passwordEdit->setStyleSheet(R"(
@@ -289,7 +307,7 @@ LoginDialog::LoginDialog(QWidget *parent) :
     // 记住我 + 忘记密码行
     QHBoxLayout *optionsLayout = new QHBoxLayout();
     
-    m_rememberCheck = new QCheckBox("记住我");
+    m_rememberCheck = new QCheckBox("记住我", rightPanel);
     m_rememberCheck->setStyleSheet(R"(
         QCheckBox {
             font-size: 13px;
@@ -323,7 +341,7 @@ LoginDialog::LoginDialog(QWidget *parent) :
     optionsLayout->addWidget(ui->forgotPasswordLink);
     
     // 管理员入口链接（紧凑样式）
-    QPushButton *adminToggleBtn = new QPushButton("🔑 管理员登录");
+    QPushButton *adminToggleBtn = new QPushButton("🔑 管理员登录", rightPanel);
     adminToggleBtn->setStyleSheet(R"(
         QPushButton {
             font-size: 12px;
@@ -375,7 +393,7 @@ LoginDialog::LoginDialog(QWidget *parent) :
     
     // 注册链接
     QHBoxLayout *registerLayout = new QHBoxLayout();
-    QLabel *noAccountLabel = new QLabel("还没有账号？");
+    QLabel *noAccountLabel = new QLabel("还没有账号？", rightPanel);
     noAccountLabel->setStyleSheet("font-size: 13px; color: #888; background: transparent;");
     
     ui->registerLink->setStyleSheet(R"(
@@ -422,11 +440,6 @@ LoginDialog::LoginDialog(QWidget *parent) :
     mainLayout->addWidget(m_particlePanel);
     mainLayout->addWidget(rightPanel, 1);
     
-    // 隐藏原有UI布局中的控件（保留功能但不显示重复元素）
-    if (ui->titleLabel) ui->titleLabel->hide();
-    if (ui->accountLabel) ui->accountLabel->hide();
-    if (ui->passwordLabel) ui->passwordLabel->hide();
-    
     // 连接忘记密码链接信号
     connect(ui->forgotPasswordLink, &QPushButton::clicked, this, &LoginDialog::onForgotPasswordClicked);
     
@@ -436,8 +449,12 @@ LoginDialog::LoginDialog(QWidget *parent) :
 
 LoginDialog::~LoginDialog()
 {
+    qDebug() << "[LoginDialog] 析构函数被调用";
+    
+    // m_particlePanel 已经是 mainContainer 的子级，会被自动清理
+    // m_rememberCheck 也是子级，会被自动清理
+    
     delete ui;
-    //if (registerDialog) delete registerDialog;
 }
 
 void LoginDialog::on_loginButton_clicked()
@@ -528,7 +545,7 @@ void LoginDialog::on_loginButton_clicked()
                      << "角色:" << (userProfile.isAdmin() ? "管理员" : "普通用户");
             
             // 创建主窗口
-            MainWindow *mainWin = new MainWindow();
+            MainWindow *mainWin = new MainWindow(nullptr);
             mainWin->setAttribute(Qt::WA_DeleteOnClose);
             
             // 将加载的用户信息传递给主窗口
@@ -539,8 +556,10 @@ void LoginDialog::on_loginButton_clicked()
             
             mainWin->show();
             
-            // 关闭登录窗口
-            QTimer::singleShot(100, this, &LoginDialog::close);
+            qDebug() << "[LoginDialog] 主窗口已显示，延迟删除登录窗口";
+            
+            // 使用 deleteLater 延迟删除登录窗口，避免立即关闭导致的问题
+            QTimer::singleShot(100, this, &QDialog::deleteLater);
         } else {
             // 密码错误（新增失败次数限制）
             m_failedAttempts++;
