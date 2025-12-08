@@ -9,6 +9,8 @@
 #include <QPointF>
 #include <QSettings>      // 新增：用于记住我功能
 #include <QCheckBox>      // 新增：记住我复选框
+#include <QHideEvent>
+#include <QShowEvent>
 #include "register.h"
 
 namespace Ui {
@@ -30,6 +32,10 @@ class ParticlePanel : public QWidget
     Q_OBJECT
 public:
     explicit ParticlePanel(QWidget *parent = nullptr);
+    ~ParticlePanel();
+    
+    void startAnimation();  // 启动动画
+    void stopAnimation();   // 停止动画
     
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -61,18 +67,21 @@ private slots:
 
 private:
     Ui::LoginDialog *ui;
-    //RegisterDialog *registerDialog;     // 注册界面指针
-    QScopedPointer<RegisterDialog> registerDialog; // 优化：智能指针替代裸指针
-    int m_failedAttempts = 0; // 新增：失败次数计数
-    QDateTime m_lockUntil;    // 新增：锁定截止时间
-    ParticlePanel *m_particlePanel = nullptr; // 粒子动画面板
-    QCheckBox *m_rememberCheck = nullptr;     // 记住我复选框
-    QString m_adminCode;                      // 管理员验证码（临时存储）
+    QScopedPointer<RegisterDialog> registerDialog;
+    int m_failedAttempts = 0;
+    QDateTime m_lockUntil;
+    ParticlePanel *m_particlePanel = nullptr;
+    QCheckBox *m_rememberCheck = nullptr;
+    QString m_adminCode;
     
     // 记住我功能
-    void loadRememberedCredentials();  // 加载保存的凭证
-    void saveCredentials();            // 保存凭证
-    void clearCredentials();           // 清除保存的凭证
+    void loadRememberedCredentials();
+    void saveCredentials();
+    void clearCredentials();
+    
+protected:
+    void hideEvent(QHideEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 };
 
 #endif // LOGINDIALOG_H

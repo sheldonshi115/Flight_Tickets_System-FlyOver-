@@ -3,6 +3,7 @@
 #include "dbmanager.h"
 #include "flightdialog.h"
 #include "seatdialog.h"
+#include "membersystem.h"
 #include <QMessageBox>
 #include <QStackedWidget>
 #include <ordermanager.h>
@@ -96,6 +97,12 @@ FlightManager::FlightManager(QWidget *parent) :
 FlightManager::~FlightManager()
 {
     delete ui;
+}
+
+void FlightManager::setCurrentUser(const QString& account)
+{
+    m_currentUserAccount = account;
+    qDebug() << "[FlightManager] 当前用户设置为：" << account;
 }
 
 void FlightManager::setupTableView()
@@ -273,7 +280,12 @@ Flight FlightManager::getSelectedFlight()
     flight.setArrivalCity(ui->twFlightList->item(row, 3)->text());
     flight.setDepartureTime(QDateTime::fromString(ui->twFlightList->item(row, 4)->text(), "yyyy-MM-dd hh:mm"));
     flight.setArrivalTime(QDateTime::fromString(ui->twFlightList->item(row, 5)->text(), "yyyy-MM-dd hh:mm"));
-    flight.setPrice(ui->twFlightList->item(row, 6)->text().toDouble());
+    
+    // 修复：移除价格字符串中的货币符号
+    QString priceStr = ui->twFlightList->item(row, 6)->text();
+    priceStr.remove(QRegularExpression("[^0-9.]")); // 移除所有非数字和小数点的字符
+    flight.setPrice(priceStr.toDouble());
+    
     flight.setTotalSeats(ui->twFlightList->item(row, 7)->text().toInt());
     flight.setAvailableSeats(ui->twFlightList->item(row, 8)->text().toInt());
 
@@ -704,6 +716,28 @@ void FlightManager::onBookTicketClicked()
 
     if (confirmBox.exec() != QMessageBox::Yes) return;
 
+    // 检查飞机币余额
+    if (!m_currentUserAccount.isEmpty()) {
+        MemberSystem& memberSys = MemberSystem::instance();
+        MemberInfo memberInfo = memberSys.getMemberInfo(m_currentUserAccount);
+        
+        if (memberInfo.balance < flight.price()) {
+            QMessageBox::critical(this, "余额不足", 
+                QString("您的飞机币余额不足！\n当前余额：¥%1\n票价：¥%2")
+                .arg(memberInfo.balance, 0, 'f', 2)
+                .arg(flight.price(), 0, 'f', 2));
+            return;
+        }
+        
+        // 扣除飞机币
+        if (!memberSys.deductBalance(m_currentUserAccount, flight.price(), 
+            QString("购买航班 %1 座位 %2").arg(flight.flightNumber()).arg(m_selectedSeat))) {
+            QMessageBox::critical(this, "失败", "扣除飞机币失败，请重试！");
+            return;
+        }
+        qDebug() << "飞机币扣除成功：" << flight.price();
+    }
+
     // 更新可用座位
     Flight updatedFlight = flight;
     updatedFlight.setAvailableSeats(flight.availableSeats() - 1);
@@ -728,10 +762,28 @@ void FlightManager::onBookTicketClicked()
     if (!DBManager::instance().addOrder(newOrder)) {
         updatedFlight.setAvailableSeats(flight.availableSeats());
         DBManager::instance().updateFlight(updatedFlight);
+        
+        // 恢复飞机币
+        if (!m_currentUserAccount.isEmpty()) {
+            MemberSystem::instance().addBalance(m_currentUserAccount, flight.price(), "订单创建失败，退款");
+        }
+        
         QMessageBox::critical(this, "失败", "订单创建失败，座位已恢复！");
         return;
     }
     qDebug() << "订单创建成功：" << newOrder.orderNumber();
+    
+    // 标记座位为已售
+    if (!DBManager::instance().markSeatAsSold(flight.flightNumber(), m_selectedSeat)) {
+        qWarning() << "座位标记失败，但订单已创建";
+    }
+    
+    // 增加飞行里程（如果有当前用户）
+    if (!m_currentUserAccount.isEmpty()) {
+        double distance = calculateFlightDistance(flight.departureCity(), flight.arrivalCity());
+        MemberSystem::instance().addMileage(m_currentUserAccount, distance);
+        qDebug() << "飞行里程已增加：" << distance << "公里";
+    }
 
     // 重置状态
     m_selectedSeat.clear();

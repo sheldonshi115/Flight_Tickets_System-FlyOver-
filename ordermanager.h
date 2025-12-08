@@ -19,6 +19,8 @@ public:
     ~OrderManager();
     // 新增：公共刷新接口（购票成功后调用，刷新订单列表）
     void refreshOrderList();
+    // 清空所有订单
+    void clearAllOrders();
     // 在 OrderManager 类中添加信号声明
 signals:
     void orderCanceled(const QString& flightNum); // 取消订单后通知刷新航班

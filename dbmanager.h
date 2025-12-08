@@ -48,10 +48,16 @@ public:
     bool addUser(const QString& account, const QString& password, const QString& role = "user");
     QList<Order> getAllOrders(); // 获取所有订单
     QList<Order> findOrders(const QString& flightNum, const QDate& date, const QString& status); // 筛选订单
+    bool clearAllOrders(); // 清空所有订单
      // 新增订单
     bool cancelOrder(int orderId); // 取消订单（更新状态为"已取消"）
     Order getOrderById(int orderId); // 根据ID获取订单详情
     Flight getFlightByFlightNum(const QString& flightNum);
+    
+    // 座位状态管理
+    bool markSeatAsSold(const QString& flightNum, const QString& seatId); // 标记座位为已售
+    bool isSeatSold(const QString& flightNum, const QString& seatId); // 检查座位是否已售
+    QStringList getSoldSeats(const QString& flightNum); // 获取某航班所有已售座位
     
     // 新增：用户信息保存和加载方法
     bool saveUserProfile(const UserProfile& profile); // 保存用户信息到数据库

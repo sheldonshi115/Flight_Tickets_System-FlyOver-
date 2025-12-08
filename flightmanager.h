@@ -25,6 +25,9 @@ class FlightManager : public QWidget
 public:
     explicit FlightManager(QWidget *parent = nullptr);
     ~FlightManager();
+    
+    // 设置当前用户账号（用于扣除飞机币）
+    void setCurrentUser(const QString& account);
 
     // 公共方法声明
     void setupTableView();                  // 初始化航班表格
@@ -57,6 +60,7 @@ private:
     bool m_isCardViewMode = false;          // 卡片视图模式（普通用户）
     QString m_selectedSeat;                 // 选中的座位号（如 "1A"）
     QString m_currentFlightNo;              // 当前选中的航班号
+    QString m_currentUserAccount;           // 当前用户账号
     bool m_isManualClick = true;            // 标记是否为手动点击按钮（修复：移到 private 区域）
     QTimer *m_refreshTimer;                 // 延迟刷新定时器（可选，优化取消订单刷新）
     

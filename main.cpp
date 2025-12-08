@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QFile>
 #include <QMessageBox.h>
+#include <QProcess>
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
@@ -24,10 +25,29 @@ int main(int argc, char *argv[]) {
 
     // 显示登录窗口
     // 登录成功后，login.cpp 中会自动创建 MainWindow 并调用 setUserProfile
-    // 登录失败则程序退出
-    LoginDialog *loginDialog = new LoginDialog();
-    loginDialog->setAttribute(Qt::WA_DeleteOnClose); // 关闭时自动释放内存
-    loginDialog->show(); // 使用 show() 而不是 exec()，让应用继续运行
+    LoginDialog loginDialog;
+    loginDialog.show();
 
-    return a.exec();
+    int exitCode = a.exec();
+    
+    // 检查退出码，如果是 1000 表示需要重启
+    if (exitCode == 1000) {
+        qDebug() << "[main] 检测到重启信号，准备重启应用程序";
+        
+        // 使用 QProcess 启动新实例
+        QString program = QApplication::applicationFilePath();
+        QStringList arguments = QApplication::arguments();
+        arguments.removeFirst(); // 移除程序路径
+        
+        // 分离进程启动（不等待子进程结束）
+        bool started = QProcess::startDetached(program, arguments);
+        
+        if (started) {
+            qDebug() << "[main] 新实例已启动";
+        } else {
+            qWarning() << "[main] 无法启动新实例";
+        }
+    }
+    
+    return exitCode;
 }

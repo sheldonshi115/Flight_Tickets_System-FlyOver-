@@ -31,6 +31,7 @@ OrderManager::OrderManager(QWidget *parent) :
     // 4. 绑定信号槽（修改取消订单按钮绑定，添加手动标记）
     connect(ui->btnQuery, &QPushButton::clicked, this, &OrderManager::on_btnQuery_clicked);
     connect(ui->btnReset, &QPushButton::clicked, this, &OrderManager::on_btnReset_clicked);
+    connect(ui->btnClearAll, &QPushButton::clicked, this, &OrderManager::clearAllOrders);
     // 修复：绑定取消订单按钮时标记为手动触发
     connect(ui->btnCancelOrder, &QPushButton::clicked, this, [this]() {
         m_isCancelManual = true;
@@ -157,6 +158,24 @@ void OrderManager::on_btnReset_clicked()
     ui->cbxOrderStatus->setCurrentIndex(0);
     loadOrdersToTable(DBManager::instance().getAllOrders());
     on_twOrderList_itemSelectionChanged();
+}
+
+// 清空所有订单
+void OrderManager::clearAllOrders()
+{
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this, "确认清空", "确定要清空所有订单吗？此操作不可恢复！",
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No
+    );
+    
+    if (reply == QMessageBox::Yes) {
+        if (DBManager::instance().clearAllOrders()) {
+            QMessageBox::information(this, "成功", "所有订单已清空");
+            refreshOrderList();
+        } else {
+            QMessageBox::critical(this, "失败", "清空订单失败");
+        }
+    }
 }
 
 void OrderManager::on_btnCancelOrder_clicked()

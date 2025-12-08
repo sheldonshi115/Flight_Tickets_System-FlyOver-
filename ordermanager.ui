@@ -148,6 +148,25 @@ QPushButton:pressed {
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="btnClearAll">
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="text">
+         <string>清空订单</string>
+        </property>
+        <property name="styleSheet">
+         <string>QPushButton {
+    background-color: #E53935;
+    color: white;
+}
+QPushButton:hover {
+    background-color: #C62828;
+}</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer_Query">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>

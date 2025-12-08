@@ -1,5 +1,6 @@
 #include "seatdialog.h"
 #include "ui_seatdialog.h"
+#include "dbmanager.h"
 #include <QGridLayout>
 #include <QScrollArea>
 #include <QStyle>
@@ -22,8 +23,24 @@ SeatDialog::SeatDialog(const FlightInfo& flightInfo, QWidget *parent)
     this->raise(); // 置顶
     this->activateWindow(); // 激活窗口
     initFlightInfoLabel();
+    loadSoldSeats(); // 加载已售座位
     createSeatLayout();
 }
+
+void SeatDialog::loadSoldSeats()
+{
+    // 从数据库加载已售座位
+    QStringList soldSeats = DBManager::instance().getSoldSeats(m_flightInfo.flightNumber);
+    qDebug() << "[SeatDialog] 航班" << m_flightInfo.flightNumber << "已售座位：" << soldSeats;
+    
+    // 更新座位状态
+    for (auto& seat : m_flightInfo.allSeats) {
+        if (soldSeats.contains(seat.seatId)) {
+            seat.state = Sold;
+        }
+    }
+}
+
 SeatDialog::~SeatDialog()
 {
     delete ui;

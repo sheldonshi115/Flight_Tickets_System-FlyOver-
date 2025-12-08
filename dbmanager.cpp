@@ -169,6 +169,19 @@ bool DBManager::initDatabase()
             price DECIMAL(10,2) NOT NULL
         )
     )";
+    
+    // 座位状态表（新增）
+    QString createSeats = R"(
+        CREATE TABLE IF NOT EXISTS flight_seats (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            flight_num VARCHAR(20) NOT NULL,
+            seat_id VARCHAR(10) NOT NULL,
+            status VARCHAR(20) DEFAULT 'available',
+            UNIQUE KEY unique_seat (flight_num, seat_id),
+            FOREIGN KEY (flight_num) REFERENCES flights(flight_num) ON DELETE CASCADE
+        )
+    )";
+    
     QString createOrders = R"(
     CREATE TABLE IF NOT EXISTS orders (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -187,7 +200,7 @@ bool DBManager::initDatabase()
 
 
     // 执行建表语句
-    if(query.exec(createUsers) && query.exec(createFlights)&&query.exec(createOrders)) {
+    if(query.exec(createUsers) && query.exec(createFlights) && query.exec(createSeats) && query.exec(createOrders)) {
         qDebug() << "数据表检查/创建成功。";
         // 检查并插入测试数据
         if(query.exec("SELECT COUNT(*) FROM flights")&&query.next()){
@@ -513,6 +526,21 @@ bool DBManager::cancelOrder(int orderId)
     }
 }
 
+// 清空所有订单
+bool DBManager::clearAllOrders()
+{
+    if (!db.isOpen()) return false;
+    
+    QSqlQuery query(db);
+    if (query.exec("DELETE FROM orders")) {
+        qDebug() << "所有订单已清空";
+        return true;
+    } else {
+        qWarning() << "清空订单失败:" << query.lastError().text();
+        return false;
+    }
+}
+
 // 5. 根据ID获取订单详情
 Order DBManager::getOrderById(int orderId)
 {
@@ -691,16 +719,65 @@ UserProfile DBManager::loadUserProfile(const QString& account)
                  << "nickname:" << profile.nickname 
                  << "phone:" << profile.phone 
                  << "email:" << profile.email
-                 << "gender:" << genderStr;
-    } else {
-        qWarning() << "未找到用户:" << account;
-        // 仍然返回account，其他信息使用默认值
-        profile.nickname = account; // 默认使用账号作为昵称
-        profile.gender = Gender::Unknown;
-        qDebug() << "使用默认值初始化用户信息";
+                 << "gender:" << (profile.gender == Gender::Male ? "男" : profile.gender == Gender::Female ? "女" : "未知");
     }
 
     return profile;
+}
+
+// 座位状态管理
+bool DBManager::markSeatAsSold(const QString& flightNum, const QString& seatId)
+{
+    if (!db.isOpen()) return false;
+    
+    QSqlQuery query(db);
+    query.prepare(R"(
+        INSERT INTO flight_seats (flight_num, seat_id, status)
+        VALUES (:flight_num, :seat_id, 'sold')
+        ON DUPLICATE KEY UPDATE status = 'sold'
+    )");
+    query.bindValue(":flight_num", flightNum);
+    query.bindValue(":seat_id", seatId);
+    
+    if (query.exec()) {
+        qDebug() << "座位标记为已售：" << flightNum << seatId;
+        return true;
+    } else {
+        qWarning() << "标记座位失败:" << query.lastError().text();
+        return false;
+    }
+}
+
+bool DBManager::isSeatSold(const QString& flightNum, const QString& seatId)
+{
+    if (!db.isOpen()) return false;
+    
+    QSqlQuery query(db);
+    query.prepare("SELECT status FROM flight_seats WHERE flight_num = :flight_num AND seat_id = :seat_id");
+    query.bindValue(":flight_num", flightNum);
+    query.bindValue(":seat_id", seatId);
+    
+    if (query.exec() && query.next()) {
+        return query.value("status").toString() == "sold";
+    }
+    return false;
+}
+
+QStringList DBManager::getSoldSeats(const QString& flightNum)
+{
+    QStringList soldSeats;
+    if (!db.isOpen()) return soldSeats;
+    
+    QSqlQuery query(db);
+    query.prepare("SELECT seat_id FROM flight_seats WHERE flight_num = :flight_num AND status = 'sold'");
+    query.bindValue(":flight_num", flightNum);
+    
+    if (query.exec()) {
+        while (query.next()) {
+            soldSeats << query.value("seat_id").toString();
+        }
+    }
+    return soldSeats;
 }
 
 

@@ -31,6 +31,7 @@ private:
     QPushButton* m_selectedSeat = nullptr;
 
     void initFlightInfoLabel();
+    void loadSoldSeats(); // 加载已售座位状态
     void createSeatLayout(); // 生成座位布局
     void updateButtonStyle(QPushButton* btn, SeatState state); // 更新座位样式
 };

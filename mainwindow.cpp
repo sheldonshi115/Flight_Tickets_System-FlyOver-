@@ -5,6 +5,7 @@
 #include <QPropertyAnimation>
 #include <QEasingCurve>
 #include <QTimer>
+#include <QProcess>
 #include "ai.h"
 #include <ordermanager.h>
 #include "dataanalyticswidget.h"
@@ -64,7 +65,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_appUser.email = "";
     m_appUser.avatar = QPixmap(":/images/default_avatar.jpg");
     
-    setIsAdmin(false); // 默认为普通用户，登录后根据实际角色更新
+    // 默认为普通用户，但不调用 setIsAdmin（由 login.cpp 调用）
+    m_isAdmin = false;
     
     // 强制应用浅色主题（不受系统深色模式影响）
     ThemeManager::instance().forceLightTheme();
@@ -156,8 +158,8 @@ void MainWindow::setUserProfile(const UserProfile& profile) {
     // 更新主页面显示的用户信息
     updateMemberInfo();
     
-    // 根据用户角色设置权限
-    setIsAdmin(profile.isAdmin());
+    // 注意：不在这里调用 setIsAdmin，由 login.cpp 中调用
+    // setIsAdmin(profile.isAdmin());
 }
 MainWindow::~MainWindow()
 {
@@ -339,6 +341,9 @@ void MainWindow::on_actionFlightManager_triggered()
     if (!m_flightManager) {
         m_flightManager = new FlightManager(ui->stackedWidget);
         ui->stackedWidget->addWidget(m_flightManager);
+        
+        // 设置当前用户
+        m_flightManager->setCurrentUser(m_appUser.account);
 
         // 【新增】连接信号（管理员模式购票也需要同步订单）
         // 确保 m_orderManager 存在后再连接
@@ -357,6 +362,9 @@ void MainWindow::on_btnFlightQuery_clicked()
     if (!m_flightManager) {
         m_flightManager = new FlightManager(ui->stackedWidget);
         ui->stackedWidget->addWidget(m_flightManager);
+        
+        // 设置当前用户
+        m_flightManager->setCurrentUser(m_appUser.account);
 
         // 【新增】连接FlightManager的订单创建信号到OrderManager的刷新方法
         // 确保 m_orderManager 存在后再连接
@@ -409,7 +417,7 @@ void MainWindow::on_btnDataAnalytics_clicked()
 // 新增：退出登录逻辑
 void MainWindow::on_actionLogout_triggered()
 {
-    // 只弹出一次确认框（因已修复重复连接问题）
+    // 只弹出一次确认框
     QMessageBox::StandardButton reply = QMessageBox::question(
         this, "退出登录", "确定要退出当前账号吗？",
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No
@@ -418,19 +426,21 @@ void MainWindow::on_actionLogout_triggered()
         return;
     }
 
-    qDebug() << "[MainWindow] 用户退出登录，关闭主窗口";
+    qDebug() << "[MainWindow] 用户退出登录，准备重启应用程序";
 
-    // 创建登录窗口（无父对象，避免被主窗口关闭影响）
-    LoginDialog *loginDialog = new LoginDialog(nullptr);
-    loginDialog->setAttribute(Qt::WA_DeleteOnClose);
+    // 获取当前可执行文件路径和参数
+    QString program = QApplication::applicationFilePath();
+    QStringList arguments = QApplication::arguments();
+    arguments.removeFirst(); // 移除程序路径本身
     
-    // 先显示登录窗口
-    loginDialog->show();
+    qDebug() << "[MainWindow] 准备重启: " << program;
     
-    qDebug() << "[MainWindow] 登录窗口已显示，即将关闭主窗口";
-
-    // 使用 deleteLater 延迟删除，避免立即关闭导致的问题
-    this->deleteLater();
+    // 关闭主窗口
+    this->close();
+    
+    // 退出当前应用程序并重新启动
+    // exitCode = 1000 表示需要重启
+    QApplication::exit(1000);
 }
 void MainWindow::clicked_btnProfile(){
     qDebug() << "clicked_btnProfile: m_appUser.account=" << m_appUser.account;

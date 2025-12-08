@@ -1,4 +1,5 @@
 #include "membersystem.h"
+#include "dbmanager.h"
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDebug>
@@ -92,7 +93,14 @@ MemberInfo MemberSystem::getMemberInfo(const QString& userId)
     MemberInfo info;
     info.userId = userId;
     
-    QSqlQuery query;
+    // 使用 DBManager 的数据库连接
+    QSqlDatabase db = DBManager::instance().getDatabase();
+    if (!db.isOpen()) {
+        qWarning() << "getMemberInfo: 数据库未打开";
+        return info;
+    }
+    
+    QSqlQuery query(db);
     query.prepare("SELECT * FROM members WHERE user_id = :user_id");
     query.bindValue(":user_id", userId);
     
@@ -114,7 +122,13 @@ MemberInfo MemberSystem::getMemberInfo(const QString& userId)
 
 bool MemberSystem::updateMemberInfo(const MemberInfo& info)
 {
-    QSqlQuery query;
+    QSqlDatabase db = DBManager::instance().getDatabase();
+    if (!db.isOpen()) {
+        qWarning() << "updateMemberInfo: 数据库未打开";
+        return false;
+    }
+    
+    QSqlQuery query(db);
     query.prepare(R"(
         UPDATE members 
         SET points = :points, balance = :balance, mileage = :mileage, level = :level
@@ -137,7 +151,13 @@ bool MemberSystem::updateMemberInfo(const MemberInfo& info)
 
 bool MemberSystem::addBalance(const QString& userId, double amount, const QString& description)
 {
-    QSqlQuery query;
+    QSqlDatabase db = DBManager::instance().getDatabase();
+    if (!db.isOpen()) {
+        qWarning() << "addBalance: 数据库未打开";
+        return false;
+    }
+    
+    QSqlQuery query(db);
     query.prepare(R"(
         UPDATE members SET balance = balance + :amount WHERE user_id = :user_id
     )");
@@ -147,7 +167,7 @@ bool MemberSystem::addBalance(const QString& userId, double amount, const QStrin
     if (query.exec()) {
         // 记录交易
         QString transId = QUuid::createUuid().toString(QUuid::WithoutBraces);
-        QSqlQuery transQuery;
+        QSqlQuery transQuery(db);
         transQuery.prepare(R"(
             INSERT INTO transactions (id, user_id, type, amount, description, time)
             VALUES (:id, :user_id, 'earn', :amount, :description, :time)
@@ -178,7 +198,13 @@ bool MemberSystem::deductBalance(const QString& userId, double amount, const QSt
         return false;
     }
     
-    QSqlQuery query;
+    QSqlDatabase db = DBManager::instance().getDatabase();
+    if (!db.isOpen()) {
+        qWarning() << "deductBalance: 数据库未打开";
+        return false;
+    }
+    
+    QSqlQuery query(db);
     query.prepare(R"(
         UPDATE members SET balance = balance - :amount WHERE user_id = :user_id
     )");
@@ -188,7 +214,7 @@ bool MemberSystem::deductBalance(const QString& userId, double amount, const QSt
     if (query.exec()) {
         // 记录交易
         QString transId = QUuid::createUuid().toString(QUuid::WithoutBraces);
-        QSqlQuery transQuery;
+        QSqlQuery transQuery(db);
         transQuery.prepare(R"(
             INSERT INTO transactions (id, user_id, type, amount, description, time)
             VALUES (:id, :user_id, 'spend', :amount, :description, :time)
@@ -211,7 +237,13 @@ bool MemberSystem::deductBalance(const QString& userId, double amount, const QSt
 
 bool MemberSystem::addPoints(const QString& userId, int points)
 {
-    QSqlQuery query;
+    QSqlDatabase db = DBManager::instance().getDatabase();
+    if (!db.isOpen()) {
+        qWarning() << "addPoints: 数据库未打开";
+        return false;
+    }
+    
+    QSqlQuery query(db);
     query.prepare("UPDATE members SET points = points + :points WHERE user_id = :user_id");
     query.bindValue(":points", points);
     query.bindValue(":user_id", userId);
@@ -227,7 +259,13 @@ bool MemberSystem::addPoints(const QString& userId, int points)
 
 bool MemberSystem::deductPoints(const QString& userId, int points)
 {
-    QSqlQuery query;
+    QSqlDatabase db = DBManager::instance().getDatabase();
+    if (!db.isOpen()) {
+        qWarning() << "deductPoints: 数据库未打开";
+        return false;
+    }
+    
+    QSqlQuery query(db);
     query.prepare("UPDATE members SET points = points - :points WHERE user_id = :user_id");
     query.bindValue(":points", points);
     query.bindValue(":user_id", userId);
@@ -240,7 +278,13 @@ bool MemberSystem::addMileage(const QString& userId, double mileage)
     MemberInfo oldInfo = getMemberInfo(userId);
     MemberLevel oldLevel = oldInfo.level;
     
-    QSqlQuery query;
+    QSqlDatabase db = DBManager::instance().getDatabase();
+    if (!db.isOpen()) {
+        qWarning() << "addMileage: 数据库未打开";
+        return false;
+    }
+    
+    QSqlQuery query(db);
     query.prepare("UPDATE members SET mileage = mileage + :mileage WHERE user_id = :user_id");
     query.bindValue(":mileage", mileage);
     query.bindValue(":user_id", userId);
@@ -251,7 +295,7 @@ bool MemberSystem::addMileage(const QString& userId, double mileage)
         
         // 如果等级提升，更新数据库并发出信号
         if (newInfo.level != oldLevel) {
-            QSqlQuery updateQuery;
+            QSqlQuery updateQuery(db);
             updateQuery.prepare("UPDATE members SET level = :level WHERE user_id = :user_id");
             updateQuery.bindValue(":level", static_cast<int>(newInfo.level));
             updateQuery.bindValue(":user_id", userId);
@@ -271,7 +315,13 @@ QList<Transaction> MemberSystem::getTransactionHistory(const QString& userId, in
 {
     QList<Transaction> transactions;
     
-    QSqlQuery query;
+    QSqlDatabase db = DBManager::instance().getDatabase();
+    if (!db.isOpen()) {
+        qWarning() << "getTransactionHistory: 数据库未打开";
+        return transactions;
+    }
+    
+    QSqlQuery query(db);
     query.prepare(R"(
         SELECT * FROM transactions 
         WHERE user_id = :user_id 

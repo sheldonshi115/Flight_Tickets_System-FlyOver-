@@ -118,7 +118,7 @@ void ProfileDisplayDialog::on_btnLogout_clicked() {
     );
     
     if (reply == QMessageBox::Yes) {
-        qDebug() << "[ProfileDisplayDialog] 用户确认退出登录";
+        qDebug() << "[ProfileDisplayDialog] 用户确认退出登录，准备重启应用程序";
         
         // 关闭个人信息窗口
         this->reject();
@@ -135,17 +135,13 @@ void ProfileDisplayDialog::on_btnLogout_clicked() {
         }
         
         if (mainWindow) {
-            qDebug() << "[ProfileDisplayDialog] 找到主窗口，创建登录窗口";
+            qDebug() << "[ProfileDisplayDialog] 找到主窗口，准备重启";
             
-            // 创建新的登录窗口
-            LoginDialog *loginDialog = new LoginDialog(nullptr);
-            loginDialog->setAttribute(Qt::WA_DeleteOnClose);
-            loginDialog->show();
+            // 关闭主窗口
+            mainWindow->close();
             
-            qDebug() << "[ProfileDisplayDialog] 登录窗口已显示，删除主窗口";
-            
-            // 使用 deleteLater 延迟删除主窗口
-            mainWindow->deleteLater();
+            // 退出并重启应用程序
+            QApplication::exit(1000);
         }
     }
 }

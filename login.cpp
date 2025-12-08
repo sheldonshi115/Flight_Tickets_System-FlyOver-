@@ -1,4 +1,4 @@
-#include "login.h"
+﻿#include "login.h"
 #include "ui_login.h"
 #include "dbmanager.h"
 #include "mainwindow.h"
@@ -22,16 +22,42 @@
 #include <QSettings>
 #include <QRandomGenerator>
 #include <QDebug>
+#include <QHideEvent>
+#include <QShowEvent>
 #include <cmath>
 
-// ========== ParticlePanel 实现 (性能优化版) ==========
+// ========== ParticlePanel 实现 (==========
 ParticlePanel::ParticlePanel(QWidget *parent)
-    : QWidget(parent), m_gradientOffset(0.0f)
+    : QWidget(parent), m_gradientOffset(0.0f), m_timerId(0)
 {
     setAttribute(Qt::WA_TranslucentBackground, false);
     setAttribute(Qt::WA_OpaquePaintEvent); // 性能优化：声明不透明绘制
     initParticles();
-    m_timerId = startTimer(50); // ~20 FPS (降低帧率提高性能)
+    startAnimation();
+}
+
+ParticlePanel::~ParticlePanel()
+{
+    stopAnimation();
+}
+
+void ParticlePanel::startAnimation()
+{
+    if (m_timerId == 0) {
+        m_timerId = startTimer(50); // ~20 FPS
+        qDebug() << "[ParticlePanel] 动画已启动, timerId=" << m_timerId;
+    } else {
+        qDebug() << "[ParticlePanel] 动画已在运行, timerId=" << m_timerId;
+    }
+}
+
+void ParticlePanel::stopAnimation()
+{
+    if (m_timerId != 0) {
+        killTimer(m_timerId);
+        qDebug() << "[ParticlePanel] 动画已停止, timerId=" << m_timerId;
+        m_timerId = 0;
+    }
 }
 
 void ParticlePanel::initParticles()
@@ -450,11 +476,28 @@ LoginDialog::LoginDialog(QWidget *parent) :
 LoginDialog::~LoginDialog()
 {
     qDebug() << "[LoginDialog] 析构函数被调用";
-    
-    // m_particlePanel 已经是 mainContainer 的子级，会被自动清理
-    // m_rememberCheck 也是子级，会被自动清理
-    
     delete ui;
+}
+
+
+// 窗口隐藏时停止动画
+void LoginDialog::hideEvent(QHideEvent *event)
+{
+    qDebug() << "[LoginDialog] hideEvent - 停止粒子动画";
+    if (m_particlePanel) {
+        m_particlePanel->stopAnimation();
+    }
+    QDialog::hideEvent(event);
+}
+
+// 窗口显示时启动动画
+void LoginDialog::showEvent(QShowEvent *event)
+{
+    QDialog::showEvent(event);
+    qDebug() << "[LoginDialog] showEvent - 启动粒子动画";
+    if (m_particlePanel) {
+        m_particlePanel->startAnimation();
+    }
 }
 
 void LoginDialog::on_loginButton_clicked()
@@ -556,10 +599,10 @@ void LoginDialog::on_loginButton_clicked()
             
             mainWin->show();
             
-            qDebug() << "[LoginDialog] 主窗口已显示，延迟删除登录窗口";
+            qDebug() << "[LoginDialog] 主窗口已显示，隐藏登录窗口";
             
-            // 使用 deleteLater 延迟删除登录窗口，避免立即关闭导致的问题
-            QTimer::singleShot(100, this, &QDialog::deleteLater);
+            // 隐藏登录窗口（不删除，以便退出登录时重用）
+            this->hide();
         } else {
             // 密码错误（新增失败次数限制）
             m_failedAttempts++;
@@ -640,22 +683,67 @@ void LoginDialog::clearCredentials()
 
 void LoginDialog::toggleAdminCodeInput()
 {
-    // 使用简洁的输入对话框
-    bool ok;
-    QString code = QInputDialog::getText(this, 
-        "管理员验证",
-        "请输入管理员验证码：",
-        QLineEdit::Password,
-        "",
-        &ok);
+    qDebug() << "[LoginDialog] toggleAdminCodeInput 被调用";
     
-    if (ok && !code.isEmpty()) {
-        if (code == "Admin") {
-            m_adminCode = code;
-            QMessageBox::information(this, "验证成功", "管理员验证码已确认！\n登录后将以管理员身份进入系统。");
-        } else {
-            m_adminCode.clear();
-            QMessageBox::warning(this, "验证失败", "管理员验证码错误！\n将以普通用户身份登录。");
+    // 使用简洁的输入对话框，明确设置父窗口和模态属性
+    QInputDialog dialog(this);
+    dialog.setWindowTitle("管理员验证");
+    dialog.setLabelText("请输入管理员验证码：");
+    dialog.setTextEchoMode(QLineEdit::Password);
+    dialog.setInputMode(QInputDialog::TextInput);
+    dialog.setWindowModality(Qt::ApplicationModal);
+    
+    // 设置对话框样式
+    dialog.setStyleSheet(R"(
+        QInputDialog {
+            background-color: white;
         }
+        QLabel {
+            color: #333;
+            font-size: 14px;
+            padding: 10px;
+        }
+        QLineEdit {
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            background-color: white;
+        }
+        QLineEdit:focus {
+            border-color: #3498DB;
+        }
+        QPushButton {
+            background-color: #3498DB;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 20px;
+            font-size: 14px;
+            min-width: 80px;
+        }
+        QPushButton:hover {
+            background-color: #2980B9;
+        }
+        QPushButton:pressed {
+            background-color: #1A5276;
+        }
+    )");
+    
+    if (dialog.exec() == QDialog::Accepted) {
+        QString code = dialog.textValue();
+        if (!code.isEmpty()) {
+            if (code == "Admin") {
+                m_adminCode = code;
+                QMessageBox::information(this, "验证成功", "管理员验证码已确认！\n登录后将以管理员身份进入系统。");
+                qDebug() << "[LoginDialog] 管理员验证码验证成功";
+            } else {
+                m_adminCode.clear();
+                QMessageBox::warning(this, "验证失败", "管理员验证码错误！\n将以普通用户身份登录。");
+                qDebug() << "[LoginDialog] 管理员验证码验证失败";
+            }
+        }
+    } else {
+        qDebug() << "[LoginDialog] 用户取消管理员验证";
     }
 }
