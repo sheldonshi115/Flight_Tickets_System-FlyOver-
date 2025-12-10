@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" ry="16" fill="#e8e8ff"/>
+  <g fill="#6b46c1">
+    <rect x="20" y="40" width="88" height="56" rx="8"/>
+    <rect x="52" y="20" width="24" height="40" rx="6"/>
+  </g>
+  <text x="50%" y="96" font-family="Arial" font-size="12" fill="#333" text-anchor="middle">礼品</text>
+</svg>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" ry="16" fill="#ffefc2"/>
+  <text x="50%" y="50%" font-family="Arial" font-size="28" fill="#b35a00" text-anchor="middle" dominant-baseline="middle">¥5</text>
+</svg>

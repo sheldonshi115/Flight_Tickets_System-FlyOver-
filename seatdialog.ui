@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SeatDialog</class>
+ <widget class="QDialog" name="SeatDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>900</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>航班座位选择</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">
+    QDialog {
+        background-color: #f7f9fa;
+    }
+    QLabel#lblFlightInfo {
+        color: #1a237e;
+        padding: 12px;
+        border-radius: 8px;
+        background-color: #e3f2fd;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    QFrame[objectName$=&quot;Frame&quot;] {
+        background-color: white;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        padding: 15px;
+        margin: 8px 0;
+    }
+    QLabel[objectName$=&quot;ClassLabel&quot;] { /* 修正：唯一名称 */
+        color: #00796b;
+        font-weight: bold;
+        font-size: 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e0f2f1;
+        margin-bottom: 10px;
+    }
+    QLabel#lblPlaneHead, QLabel#lblTail {
+        color: #607d8b;
+        font-size: 13px;
+        padding: 5px 0;
+    }
+    QPushButton[objectName^=&quot;seat_&quot;] {
+        min-width: 45px;
+        min-height: 45px;
+        max-width: 45px;
+        max-height: 45px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        border: none;
+        color: #333;
+    }
+    QPushButton[objectName^=&quot;seat_&quot;][seatState=&quot;available&quot;] {
+        background-color: #c8e6c9;
+        border: 1px solid #4caf50;
+    }
+    QPushButton[objectName^=&quot;seat_&quot;][seatState=&quot;available&quot;]:hover {
+        background-color: #a5d6a7;
+    }
+    QPushButton[objectName^=&quot;seat_&quot;][seatState=&quot;sold&quot;] {
+        background-color: #cfd8dc;
+        color: #607d8b;
+        border: 1px solid #90a4ae;
+    }
+    QPushButton[objectName^=&quot;seat_&quot;][seatState=&quot;selected&quot;] {
+        background-color: #64b5f6;
+        color: white;
+        font-weight: bold;
+        border: 3px solid #1e88e5;
+    }
+    QPushButton#btnConfirm {
+        background-color: #4CAF50;
+        color: white;
+        border-radius: 6px;
+        padding: 8px 20px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    QPushButton#btnConfirm:disabled {
+        background-color: #a5d6a7;
+    }
+    QPushButton#btnCancel {
+        background-color: #f0f0f0;
+        color: #455a64;
+        border-radius: 6px;
+        padding: 8px 20px;
+        border: 1px solid #cfd8dc;
+    }
+   </string>
+  </property>
+  <layout class="QVBoxLayout" name="mainVerticalLayout">
+   <item>
+    <widget class="QLabel" name="lblFlightInfo">
+     <property name="text">
+      <string>航班信息：[动态加载]</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignmentFlag::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="legendLayout">
+     <item>
+      <widget class="QLabel" name="lblAvailable">
+       <property name="text">
+        <string>可选座位</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="frameAvailable">
+       <property name="minimumSize">
+        <size><width>20</width><height>20</height></size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: #c8e6c9; border-radius: 4px; border: 1px solid #4caf50;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="lblSold">
+       <property name="text">
+        <string>已售座位</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="frameSold">
+       <property name="minimumSize">
+        <size><width>20</width><height>20</height></size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: #cfd8dc; border-radius: 4px; border: 1px solid #90a4ae;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="lblSelected">
+       <property name="text">
+        <string>已选座位</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QFrame" name="frameSelected">
+       <property name="minimumSize">
+        <size><width>20</width><height>20</height></size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: #64b5f6; border-radius: 4px; border: 1px solid #1e88e5;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_legend">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="seatContainer">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>880</width>
+        <height>563</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="seatContainerLayout">
+       <item>
+        <widget class="QLabel" name="lblPlaneHead">
+         <property name="text">
+          <string>✈ 机头方向 (排号从小到大) ✈</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <!-- 修正：头等舱框架使用唯一名称 -->
+       <item>
+        <widget class="QFrame" name="firstClassFrame">
+         <layout class="QVBoxLayout" name="firstClassContainer">
+          <item>
+           <widget class="QLabel" name="firstClassLabel"> <!-- 唯一名称 -->
+            <property name="text">
+             <string>头等舱 (动态排号)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="firstClassLayout"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <!-- 修正：经济舱框架使用唯一名称 -->
+       <item>
+        <widget class="QFrame" name="economyClassFrame">
+         <layout class="QVBoxLayout" name="economyClassContainer">
+          <item>
+           <widget class="QLabel" name="economyClassLabel"> <!-- 唯一名称 -->
+            <property name="text">
+             <string>经济舱 (动态排号)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="economyClassLayout"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_seat">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size><width>20</width><height>40</height></size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="lblTail">
+         <property name="text">
+          <string>机尾方向 💺</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="buttonLayout">
+     <item>
+      <spacer name="horizontalSpacer_button">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnCancel">
+       <property name="text">
+        <string>取消</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnConfirm">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>确认选择</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>btnCancel</sender>
+   <signal>clicked()</signal>
+   <receiver>SeatDialog</receiver>
+   <slot>reject()</slot>
+  </connection>
+  <connection>
+   <sender>btnConfirm</sender>
+   <signal>clicked()</signal>
+   <receiver>SeatDialog</receiver>
+   <slot>accept()</slot>
+  </connection>
+ </connections>
+ <slots>
+  <slot>handleSeatClicked()</slot>
+  <slot>on_btnConfirm_clicked()</slot>
+ </slots>
+</ui>

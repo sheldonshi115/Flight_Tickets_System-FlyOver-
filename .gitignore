@@ -1,0 +1,4 @@
+# Qt Creator 配置和构建产物
+.qtcreator/
+/ordermanagement.cpp
+build/

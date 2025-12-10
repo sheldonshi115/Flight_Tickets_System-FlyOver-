@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1000</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>航班票务管理系统 - FlyOver</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QHBoxLayout" name="mainLayout">
+    <item>
+     <widget class="QFrame" name="sideBar">
+      <property name="minimumSize">
+       <size>
+        <width>180</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>180</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Shape::StyledPanel</enum>
+      </property>
+      <layout class="QVBoxLayout" name="sideLayout">
+       <property name="spacing">
+        <number>5</number>
+       </property>
+       <property name="leftMargin">
+        <number>5</number>
+       </property>
+       <property name="topMargin">
+        <number>10</number>
+       </property>
+       <property name="rightMargin">
+        <number>5</number>
+       </property>
+       <property name="bottomMargin">
+        <number>10</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="logoLabel">
+         <property name="styleSheet">
+          <string notr="true">font-size: 20px; font-weight: bold; margin: 10px 0; color: #3B82F6;</string>
+         </property>
+         <property name="text">
+          <string>✈️ FlyOver</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnHome">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>45</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">font-size: 15px; border-radius: 8px; text-align: left; padding-left: 20px;</string>
+         </property>
+         <property name="text">
+          <string>🏠  主页</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnFlightQuery">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>45</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">font-size: 15px; border-radius: 8px; text-align: left; padding-left: 20px;</string>
+         </property>
+         <property name="text">
+          <string>✈️  航班查询</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="travelbutton">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>45</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">font-size: 15px; border-radius: 8px; text-align: left; padding-left: 20px;</string>
+         </property>
+         <property name="text">
+          <string>🌍  旅行动态</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnOrders">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>45</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">font-size: 15px; border-radius: 8px; text-align: left; padding-left: 20px;</string>
+         </property>
+         <property name="text">
+          <string>🧾  订单管理</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnProfile">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>45</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">font-size: 15px; border-radius: 8px; text-align: left; padding-left: 20px;</string>
+         </property>
+         <property name="text">
+          <string>🌟  个人信息</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnRecharge">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>45</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">font-size: 15px; border-radius: 8px; text-align: left; padding-left: 20px;</string>
+         </property>
+         <property name="text">
+          <string>💳  充值飞机币</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnAIService">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>45</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">font-size: 15px; border-radius: 8px; text-align: left; padding-left: 20px;</string>
+         </property>
+         <property name="text">
+          <string>💬  AI 客服</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnDataAnalytics">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>45</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">font-size: 15px; border-radius: 8px; text-align: left; padding-left: 20px;</string>
+         </property>
+         <property name="text">
+          <string>📊  数据分析</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QStackedWidget" name="stackedWidget">
+      <property name="styleSheet">
+       <string notr="true">background-color: #e8e8e8;</string>
+      </property>
+      <widget class="QWidget" name="pageHome">
+       <layout class="QVBoxLayout" name="homeLayout">
+        <item>
+         <widget class="QScrollArea" name="homeScrollArea">
+          <property name="styleSheet">
+           <string notr="true">QScrollArea { border: none; background: transparent; }</string>
+          </property>
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="homeScrollContent">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>752</width>
+             <height>697</height>
+            </rect>
+           </property>
+           <layout class="QVBoxLayout" name="homeContentLayout">
+            <item>
+             <widget class="QLabel" name="labelWelcome">
+              <property name="styleSheet">
+               <string notr="true">font-size: 32px; font-weight: bold; margin: 40px 0 20px 0; color: #3B82F6;</string>
+              </property>
+              <property name="text">
+               <string>欢迎使用 FlyOver 航班票务系统</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignmentFlag::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QFrame" name="memberInfoCard">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>200</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QFrame#memberInfoCard { 
+                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #FFFFFF, stop:1 #F0F9FF);
+                 border: 2px solid #E0F2FE;
+                 border-radius: 16px;
+                 margin: 10px 40px;
+               }</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::Shape::StyledPanel</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="labelQuickActions">
+              <property name="styleSheet">
+               <string notr="true">font-size: 20px; font-weight: bold; margin: 20px 40px 10px 40px; color: #475569;</string>
+              </property>
+              <property name="text">
+               <string>🚀 快捷功能</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QFrame" name="quickActionsFrame">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>120</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QFrame { background: transparent; }</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="labelStatistics">
+              <property name="styleSheet">
+               <string notr="true">font-size: 20px; font-weight: bold; margin: 20px 40px 10px 40px; color: #475569;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QFrame" name="statisticsFrame">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>100</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QFrame { background: transparent; }</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="homeBottomSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pageFlights">
+       <layout class="QVBoxLayout" name="flightsLayout"/>
+      </widget>
+      <widget class="QWidget" name="pageTravel">
+       <layout class="QVBoxLayout" name="travelLayout">
+        <item>
+         <widget class="QLabel" name="labelTravel">
+          <property name="text">
+           <string>旅行动态页面</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pageOrders">
+       <layout class="QVBoxLayout" name="ordersLayout">
+        <item>
+         <widget class="QLabel" name="labelOrders">
+          <property name="text">
+           <string>订单管理页面</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="pageProfile">
+       <layout class="QVBoxLayout" name="profileLayout">
+        <item>
+         <widget class="QLabel" name="labelProfile">
+          <property name="text">
+           <string>个人信息页面</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignmentFlag::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1000</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFlights">
+    <property name="title">
+     <string>航班管理(&amp;F)</string>
+    </property>
+    <addaction name="actionFlightManager"/>
+   </widget>
+   <widget class="QMenu" name="menuOrders">
+    <property name="title">
+     <string>订单管理(&amp;O)</string>
+    </property>
+    <addaction name="actionViewOrders"/>
+   </widget>
+   <widget class="QMenu" name="menuUser">
+    <property name="title">
+     <string>用户中心(&amp;U)</string>
+    </property>
+    <addaction name="actionUserinfo"/>
+    <addaction name="actionLogout"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>帮助(&amp;H)</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
+   <addaction name="menuFlights"/>
+   <addaction name="menuOrders"/>
+   <addaction name="menuUser"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionFlightManager">
+   <property name="text">
+    <string>航班管理</string>
+   </property>
+  </action>
+  <action name="actionManageFlights">
+   <property name="text">
+    <string>航班列表</string>
+   </property>
+  </action>
+  <action name="actionViewOrders">
+   <property name="text">
+    <string>查看订单</string>
+   </property>
+  </action>
+  <action name="actionProfile">
+   <property name="text">
+    <string>个人信息</string>
+   </property>
+  </action>
+  <action name="actionLogout">
+   <property name="text">
+    <string>退出登录</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>关于系统</string>
+   </property>
+  </action>
+  <action name="actionUserinfo">
+   <property name="text">
+    <string>个人信息</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
