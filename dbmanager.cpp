@@ -12,7 +12,7 @@
 const QString DBManager::DB_NAME = "flight_ticket_db";
 const QString DBManager::DB_HOST = "localhost";
 const QString DBManager::DB_USER = "root";       // 你的MySQL用户名
-const QString DBManager::DB_PWD = "cai2166013"; // 你的MySQL密码
+const QString DBManager::DB_PWD = ""; // 你的MySQL密码
 const int DBManager::DB_PORT = 3306;             // 默认端口
 
 // 单例模式：静态实例
@@ -943,6 +943,7 @@ QList<MomentItem> DBManager::getAllMoments() {
         item.content = query.value("content").toString();
         item.images = query.value("images").toString().split(",", Qt::SkipEmptyParts);
         item.userName = query.value("user_name").toString();
+        item.avatarPath = getAvatarByNickname(item.userName);
         item.likeCount = query.value("like_count").toInt();
         item.commentCount = query.value("comment_count").toInt();
         item.publishTime = query.value("publish_time").toDateTime();
@@ -951,6 +952,28 @@ QList<MomentItem> DBManager::getAllMoments() {
     }
     qDebug() << "getAllMoments最终返回" << list.size() << "条动态";
     return list;
+}
+
+QString DBManager::getAvatarByNickname(const QString& nickname) {
+    if (!db.isOpen() || nickname.trimmed().isEmpty()) {
+        return QString();
+    }
+
+    QSqlQuery query(db);
+    query.prepare(R"(
+        SELECT image FROM users WHERE nickname = :nick LIMIT 1
+    )");
+    query.bindValue(":nick", nickname.trimmed());
+
+    if (!query.exec()) {
+        qWarning() << "getAvatarByNickname 查询失败：" << query.lastError().text();
+        return QString();
+    }
+
+    if (query.next()) {
+        return query.value(0).toString();
+    }
+    return QString();
 }
 
 

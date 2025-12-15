@@ -14,6 +14,7 @@ struct MomentItem {
     QString userName = "匿名";
     QString content;
     QStringList images;
+    QString avatarPath; // 新增：头像路径（按昵称查询 users.image）
     QDateTime publishTime;
     int likeCount = 0;
     bool liked = false;
@@ -89,6 +90,7 @@ public:
     bool addComment(int momentId, const QString& content, const QString& userName);
     bool updateMomentCommentCount(int momentId);
     QList<Comment> getCommentsByMomentId(int momentId);
+    QString getAvatarByNickname(const QString& nickname); // 新增：根据昵称取头像路径
     // 新增：获取最后一次数据库错误信息（调试用）
     QString lastError() const { return db.lastError().text(); }
 };

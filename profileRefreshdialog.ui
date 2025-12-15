@@ -65,7 +65,7 @@
      <item>
       <widget class="QPushButton" name="btnChangeAvatar">
        <property name="styleSheet">
-        <string notr="true">padding: 6px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;</string>
+        <string notr="true">padding: 6px 12px; background: #f5f5f5; border: 1px; color: black; solid #ddd; border-radius: 4px;</string>
        </property>
        <property name="text">
         <string>更换头像</string>

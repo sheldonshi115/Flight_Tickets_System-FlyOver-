@@ -23,6 +23,7 @@
 #include <QMouseEvent>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QGridLayout>
 #include <QScrollArea>
 #include <QFrame>
 #include <QMessageBox>
@@ -208,6 +209,8 @@ void MainWindow::setUserProfile(const UserProfile& profile) {
              << "email=" << profile.email
              << "role=" << (profile.isAdmin() ? "Admin" : "User");
     
+    updateWelcomeLabel();
+    
     // 更新主页面显示的用户信息
     updateMemberInfo();
     
@@ -366,9 +369,11 @@ void MainWindow::navigateToDefaultPage()
             ui->stackedWidget->setCurrentWidget(ui->pageHome);
         }
     } else {
-        // 普通用户默认进入航班查询页面 (卡片视图)
-        qDebug() << "[RBAC] 普通用户模式，跳转到航班查询页面";
-        on_btnFlightQuery_clicked();
+        // 普通用户默认进入主页（修正：登录后应显示主页，而不是直接进入航班查询）
+        qDebug() << "[RBAC] 普通用户模式，跳转到主页";
+        if (ui && ui->pageHome) {
+            ui->stackedWidget->setCurrentWidget(ui->pageHome);
+        }
     }
 }
 
@@ -795,6 +800,9 @@ void MainWindow::initHomePage()
         QLayoutItem* item;
         while ((item = cardLayout->takeAt(0)) != nullptr) {
             if (item->widget()) {
+                if (item->widget() == m_welcomeLabel) {
+                    m_welcomeLabel = nullptr;
+                }
                 item->widget()->deleteLater();
             }
             delete item;
@@ -806,9 +814,14 @@ void MainWindow::initHomePage()
     }
     
     // 欢迎标签
-    QLabel* welcomeLabel = new QLabel(QString::fromUtf8("你好，") + m_appUser.nickname, memberCard);
-    welcomeLabel->setStyleSheet("font-size: 28px; font-weight: bold; color: #1E40AF; font-family: 'Microsoft YaHei UI', 'SimHei'; background: transparent;");
-    cardLayout->addWidget(welcomeLabel);
+    if (m_welcomeLabel) {
+        m_welcomeLabel->setParent(memberCard);
+    } else {
+        m_welcomeLabel = new QLabel(memberCard);
+    }
+    m_welcomeLabel->setStyleSheet("font-size: 28px; font-weight: bold; color: #1E40AF; font-family: 'Microsoft YaHei UI', 'SimHei'; background: transparent;");
+    updateWelcomeLabel();
+    cardLayout->addWidget(m_welcomeLabel);
     
     // 会员信息水平布局
     QHBoxLayout* infoLayout = new QHBoxLayout();
@@ -822,8 +835,9 @@ void MainWindow::initHomePage()
     m_memberLevelLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #1E40AF; background: transparent;");
     levelLayout->addWidget(levelTitle);
     levelLayout->addWidget(m_memberLevelLabel);
-    infoLayout->addLayout(levelLayout);
-    
+    infoLayout->setSpacing(60);
+    infoLayout->addLayout(levelLayout, 1);
+
     // 积分
     QVBoxLayout* pointsLayout = new QVBoxLayout();
     QLabel* pointsTitle = new QLabel(QString::fromUtf8("积分"), memberCard);
@@ -832,8 +846,8 @@ void MainWindow::initHomePage()
     m_pointsLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #1E40AF; background: transparent;");
     pointsLayout->addWidget(pointsTitle);
     pointsLayout->addWidget(m_pointsLabel);
-    infoLayout->addLayout(pointsLayout);
-    
+    infoLayout->addLayout(pointsLayout, 1);
+
     // 飞机币余额
     QVBoxLayout* balanceLayout = new QVBoxLayout();
     QLabel* balanceTitle = new QLabel(QString::fromUtf8("飞机币余额"), memberCard);
@@ -842,8 +856,8 @@ void MainWindow::initHomePage()
     m_balanceLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #10B981; background: transparent;");
     balanceLayout->addWidget(balanceTitle);
     balanceLayout->addWidget(m_balanceLabel);
-    infoLayout->addLayout(balanceLayout);
-    
+    infoLayout->addLayout(balanceLayout, 1);
+
     // 飞行里程
     QVBoxLayout* mileageLayout = new QVBoxLayout();
     QLabel* mileageTitle = new QLabel(QString::fromUtf8("飞行里程"), memberCard);
@@ -852,9 +866,7 @@ void MainWindow::initHomePage()
     m_mileageLabel->setStyleSheet("font-size: 18px; font-weight: bold; color: #1E40AF; background: transparent;");
     mileageLayout->addWidget(mileageTitle);
     mileageLayout->addWidget(m_mileageLabel);
-    infoLayout->addLayout(mileageLayout);
-    
-    infoLayout->addStretch();
+    infoLayout->addLayout(mileageLayout, 1);
     cardLayout->addLayout(infoLayout);
     
     // 创建快捷功能按钮
@@ -865,6 +877,52 @@ void MainWindow::initHomePage()
     
     // 更新会员信息
     updateMemberInfo();
+
+    // 确保主页不显示滚动条，内容水平居中，并禁用滚动区的键盘焦点（避免方向键移动）
+    if (ui->homeScrollArea) {
+        ui->homeScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        ui->homeScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        ui->homeScrollArea->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+        // 允许内部自适应缩放，避免固定宽度被裁切
+        ui->homeScrollArea->setWidgetResizable(true);
+
+        // 禁用滚动区域及其 viewport 的键盘焦点，阻止箭头键滚动
+        ui->homeScrollArea->setFocusPolicy(Qt::NoFocus);
+        if (ui->homeScrollArea->viewport()) ui->homeScrollArea->viewport()->setFocusPolicy(Qt::NoFocus);
+
+        // 将内部内容容器宽度限制为合适值并水平居中布局
+        QWidget *inner = ui->homeScrollArea->widget();
+        if (inner) {
+            inner->setContentsMargins(0, 0, 0, 0);
+            int sideBarW = (ui->sideBar ? ui->sideBar->width() : 180);
+            int viewportW = ui->homeScrollArea->viewport() ? ui->homeScrollArea->viewport()->width() : 0;
+            int baseW = viewportW > 0 ? viewportW : (this->width() - sideBarW - 40);
+            int minW = 680;
+            int maxW = 1600; // 放宽上限，避免宽屏时内容被截断
+            int targetW = std::clamp(baseW - 40, minW, maxW);
+            inner->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+            inner->setMinimumWidth(minW);
+            inner->setMaximumWidth(maxW);
+
+            // 会员信息卡允许伸缩但给出推荐最大宽度
+            if (memberCard) {
+                memberCard->setMinimumWidth(640);
+                memberCard->setMaximumWidth(maxW - 60);
+                memberCard->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+            }
+
+            // 将内部 layout 水平对齐到中间
+            QLayout *lyt = inner->layout();
+            if (lyt) {
+                lyt->setContentsMargins(0, 0, 0, 0);
+                lyt->setSpacing(24);
+                // 针对 QBoxLayout 设置对齐
+                if (auto box = qobject_cast<QBoxLayout*>(lyt)) {
+                    box->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
+                }
+            }
+        }
+    }
 }
 
 // 创建快捷功能按钮
@@ -872,24 +930,23 @@ void MainWindow::createQuickActionButtons()
 {
     QFrame* actionsFrame = ui->quickActionsFrame;
     
-    // 检查是否已经有布局，避免重复创建
-    QHBoxLayout* layout = qobject_cast<QHBoxLayout*>(actionsFrame->layout());
-    if (layout) {
-        // 如果已经有布局，清空所有子控件
-        QLayoutItem* item;
-        while ((item = layout->takeAt(0)) != nullptr) {
-            if (item->widget()) {
-                item->widget()->deleteLater();
-            }
-            delete item;
+    // 移除旧布局并重建为等宽网格布局，确保按钮均匀分布
+    QLayout *old = actionsFrame->layout();
+    if (old) {
+        QLayoutItem* it;
+        while ((it = old->takeAt(0)) != nullptr) {
+            if (it->widget()) it->widget()->deleteLater();
+            delete it;
         }
-    } else {
-        // 第一次创建布局
-        layout = new QHBoxLayout(actionsFrame);
-        layout->setSpacing(20);
-        layout->setContentsMargins(40, 10, 40, 10);
+        delete old;
     }
-    
+
+    QGridLayout* grid = new QGridLayout(actionsFrame);
+    grid->setContentsMargins(20, 8, 20, 8);
+    grid->setHorizontalSpacing(12);
+    grid->setVerticalSpacing(10);
+    grid->setAlignment(Qt::AlignHCenter);
+
     // 快捷按钮样式
     QString buttonStyle = R"(
         QPushButton {
@@ -914,21 +971,35 @@ void MainWindow::createQuickActionButtons()
     
     // 航班查询按钮
     QPushButton* btnQuickFlight = new QPushButton(QString::fromUtf8("✈️\n航班查询"), actionsFrame);
-    btnQuickFlight->setMinimumSize(140, 100);
+    btnQuickFlight->setMinimumSize(130, 94);
+    btnQuickFlight->setMaximumSize(150, 104);
+    btnQuickFlight->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     btnQuickFlight->setStyleSheet(buttonStyle);
     connect(btnQuickFlight, &QPushButton::clicked, this, &MainWindow::on_btnFlightQuery_clicked);
-    layout->addWidget(btnQuickFlight);
-    
+    QWidget *wrapFlight = new QWidget(actionsFrame);
+    QHBoxLayout *wrapL1 = new QHBoxLayout(wrapFlight);
+    wrapL1->setContentsMargins(4,6,4,6);
+    wrapL1->addWidget(btnQuickFlight, 0, Qt::AlignCenter);
+    grid->addWidget(wrapFlight, 0, 0);
+
     // 我的订单按钮
     QPushButton* btnQuickOrders = new QPushButton(QString::fromUtf8("🧾\n我的订单"), actionsFrame);
-    btnQuickOrders->setMinimumSize(140, 100);
+    btnQuickOrders->setMinimumSize(130, 94);
+    btnQuickOrders->setMaximumSize(150, 104);
+    btnQuickOrders->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     btnQuickOrders->setStyleSheet(buttonStyle);
     connect(btnQuickOrders, &QPushButton::clicked, this, &MainWindow::on_btnOrders_clicked);
-    layout->addWidget(btnQuickOrders);
-    
+    QWidget *wrapOrders = new QWidget(actionsFrame);
+    QHBoxLayout *wrapL2 = new QHBoxLayout(wrapOrders);
+    wrapL2->setContentsMargins(4,6,4,6);
+    wrapL2->addWidget(btnQuickOrders, 0, Qt::AlignCenter);
+    grid->addWidget(wrapOrders, 0, 1);
+
     // 地图可视化按钮
     QPushButton* btnQuickMap = new QPushButton(QString::fromUtf8("🗺️\n航线地图"), actionsFrame);
-    btnQuickMap->setMinimumSize(140, 100);
+    btnQuickMap->setMinimumSize(130, 94);
+    btnQuickMap->setMaximumSize(150, 104);
+    btnQuickMap->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     btnQuickMap->setStyleSheet(buttonStyle);
     connect(btnQuickMap, &QPushButton::clicked, this, []() {
         // 创建地图可视化窗口
@@ -942,18 +1013,30 @@ void MainWindow::createQuickActionButtons()
         
         mapWindow->show();
     });
-    layout->addWidget(btnQuickMap);
-    
+    QWidget *wrapMap = new QWidget(actionsFrame);
+    QHBoxLayout *wrapL3 = new QHBoxLayout(wrapMap);
+    wrapL3->setContentsMargins(4,6,4,6);
+    wrapL3->addWidget(btnQuickMap, 0, Qt::AlignCenter);
+    grid->addWidget(wrapMap, 0, 2);
+
     // AI客服按钮
     QPushButton* btnQuickAI = new QPushButton(QString::fromUtf8("💬\nAI 客服"), actionsFrame);
-    btnQuickAI->setMinimumSize(140, 100);
+    btnQuickAI->setMinimumSize(130, 94);
+    btnQuickAI->setMaximumSize(150, 104);
+    btnQuickAI->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     btnQuickAI->setStyleSheet(buttonStyle);
     connect(btnQuickAI, &QPushButton::clicked, this, &MainWindow::on_btnAIService_clicked);
-    layout->addWidget(btnQuickAI);
+    QWidget *wrapAI = new QWidget(actionsFrame);
+    QHBoxLayout *wrapL4 = new QHBoxLayout(wrapAI);
+    wrapL4->setContentsMargins(4,6,4,6);
+    wrapL4->addWidget(btnQuickAI, 0, Qt::AlignCenter);
+    grid->addWidget(wrapAI, 0, 3);
 
     // 积分商城按钮
     QPushButton* btnPointsShop = new QPushButton(QString::fromUtf8("🎁\n积分商城"), actionsFrame);
-    btnPointsShop->setMinimumSize(140, 100);
+    btnPointsShop->setMinimumSize(130, 94);
+    btnPointsShop->setMaximumSize(150, 104);
+    btnPointsShop->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     btnPointsShop->setStyleSheet(buttonStyle);
     connect(btnPointsShop, &QPushButton::clicked, this, [this]() {
         PointsShopDialog* dlg = new PointsShopDialog(m_appUser.account, this);
@@ -962,9 +1045,15 @@ void MainWindow::createQuickActionButtons()
         // 兑换后更新会员信息显示
         updateMemberInfo();
     });
-    layout->addWidget(btnPointsShop);
-    
-    layout->addStretch();
+    QWidget *wrapPoints = new QWidget(actionsFrame);
+    QHBoxLayout *wrapL5 = new QHBoxLayout(wrapPoints);
+    wrapL5->setContentsMargins(4,6,4,6);
+    wrapL5->addWidget(btnPointsShop, 0, Qt::AlignCenter);
+    grid->addWidget(wrapPoints, 0, 4);
+
+    // 单行五列，等比拉伸列，水平排列完整显示
+    for (int c = 0; c < 5; ++c) grid->setColumnStretch(c, 1);
+    grid->setRowStretch(0, 1);
 }
 
 // 创建统计卡片
@@ -1036,9 +1125,25 @@ void MainWindow::createStatisticsCards()
     layout->addStretch();
 }
 
+void MainWindow::updateWelcomeLabel()
+{
+    if (!m_welcomeLabel) {
+        return;
+    }
+
+    QString displayName = m_appUser.nickname.trimmed();
+    if (displayName.isEmpty()) {
+        displayName = QString::fromUtf8("用户");
+    }
+
+    m_welcomeLabel->setText(QString::fromUtf8("你好，") + displayName);
+}
+
 // 更新会员信息
 void MainWindow::updateMemberInfo()
 {
+    updateWelcomeLabel();
+
     // 安全检查：确保有有效的用户账号
     if (m_appUser.account.isEmpty()) {
         qDebug() << "[会员信息] 用户账号为空，跳过更新";

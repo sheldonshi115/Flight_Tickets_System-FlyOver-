@@ -2,6 +2,7 @@
 #include "ui_travelmoment.h"
 #include "clickablelabel.h"
 #include<dbmanager.h>
+#include "UserProfile.h" // 使用头像圆形裁剪工具
 #include <QLabel>
 #include <QPushButton>
 #include <QGridLayout>
@@ -62,12 +63,37 @@ void TravelMoment::addMoment(const MomentItem &item)
     cardLayout->setSpacing(6);
     cardLayout->setContentsMargins(10, 10, 10, 10);
 
-    // 用户名 + 时间
+    // 用户头像 + 昵称 + 时间
     QHBoxLayout *headerLayout = new QHBoxLayout;
+    headerLayout->setSpacing(10);
+
+    QLabel *avatar = new QLabel;
+    avatar->setFixedSize(44,44);
+    avatar->setAlignment(Qt::AlignCenter);
+
+    QString avatarPath = item.avatarPath.isEmpty()
+        ? DBManager::instance().getAvatarByNickname(item.userName)
+        : item.avatarPath;
+
+    QPixmap avatarPixmap;
+    if (!avatarPath.isEmpty()) {
+        avatarPixmap.load(avatarPath);
+    }
+    if (!avatarPixmap.isNull()) {
+        QPixmap round = getRoundPixmap(avatarPixmap, QSize(44,44));
+        avatar->setPixmap(round);
+        avatar->setStyleSheet("border-radius:22px;");
+    } else {
+        avatar->setStyleSheet("background:#444; border-radius:22px; color:#ccc; font-size:12px;");
+        avatar->setText("头像");
+    }
+
     QLabel *userLabel = new QLabel(item.userName);
     userLabel->setStyleSheet("color: #4fc3f7; font-weight: bold; font-size: 14px;");
     QLabel *timeLabel = new QLabel(item.publishTime.toString("yyyy-MM-dd HH:mm"));
     timeLabel->setStyleSheet("color: #999; font-size: 12px;");
+
+    headerLayout->addWidget(avatar);
     headerLayout->addWidget(userLabel);
     headerLayout->addStretch();
     headerLayout->addWidget(timeLabel);
@@ -169,12 +195,31 @@ void TravelMoment::refreshList()
         QHBoxLayout *header = new QHBoxLayout;
         header->setSpacing(10);
 
-        // 头像（圆形灰色占位，适配深色风格）
+        // 头像：优先使用用户头像，缺失则灰色占位
         QLabel *avatar = new QLabel;
         avatar->setFixedSize(44,44);
-        avatar->setStyleSheet("background:#444; border-radius:22px; color:#ccc; font-size:12px;");
         avatar->setAlignment(Qt::AlignCenter);
-        avatar->setText("头像");
+
+        QString avatarPath = m.avatarPath;
+        if (avatarPath.isEmpty()) {
+            // 兜底：根据昵称再查一次，避免老数据未填充 avatarPath
+            avatarPath = DBManager::instance().getAvatarByNickname(m.userName);
+        }
+
+        QPixmap avatarPixmap;
+        if (!avatarPath.isEmpty()) {
+            avatarPixmap.load(avatarPath);
+        }
+
+        if (!avatarPixmap.isNull()) {
+            // 圆形裁剪保持深色背景风格
+            QPixmap round = getRoundPixmap(avatarPixmap, QSize(44,44));
+            avatar->setPixmap(round);
+            avatar->setStyleSheet("border-radius:22px;");
+        } else {
+            avatar->setStyleSheet("background:#444; border-radius:22px; color:#ccc; font-size:12px;");
+            avatar->setText("头像");
+        }
 
         // 名称 + 时间垂直排列（适配深色风格）
         QVBoxLayout *nameTime = new QVBoxLayout;

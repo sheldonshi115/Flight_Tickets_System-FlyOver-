@@ -46,6 +46,7 @@ private:
     QComboBox *m_languageCombo = nullptr;   // 语言切换下拉框
     
     // 主页面控件
+    QLabel *m_welcomeLabel = nullptr;       // 欢迎语
     QLabel *m_memberLevelLabel = nullptr;    // 会员等级显示
     QLabel *m_pointsLabel = nullptr;         // 积分显示
     QLabel *m_balanceLabel = nullptr;        // 飞机币余额
@@ -63,6 +64,7 @@ private:
     void updateUILanguage();
     
     // 主页面相关方法
+    void updateWelcomeLabel();
     void initHomePage();
     void updateMemberInfo();
     void createQuickActionButtons();

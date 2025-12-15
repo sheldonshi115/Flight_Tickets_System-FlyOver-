@@ -249,14 +249,18 @@ void OrderManager::on_btnCancelOrder_clicked()
             font-size: 14px;
             min-width: 90px;
             margin-left: 10px;
+            color: black;
+        }
+        QPushButton:disabled {
+            color: black;
         }
         QPushButton#qt_msgbox_yes {
             background-color: #E53935;
-            color: white;
+            color: black;
         }
         QPushButton#qt_msgbox_no {
-            background-color: #666666;
-            color: white;
+            background-color: #D9D9D9;
+            color: black;
         }
         QPushButton:hover {
             opacity: 0.9;
