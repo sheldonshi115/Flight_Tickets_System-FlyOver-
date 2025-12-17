@@ -44,6 +44,9 @@ SOURCES += \
     PointsShopDialog.cpp \
      pointitemwidget.cpp \
     rechargedialog.cpp \
+    systememaildialog.cpp \
+    voucherdialog.cpp \
+    orderconfirmdialog.cpp \
     # models/flight.cpp \
     # models/order.cpp \
     models/user.cpp
@@ -83,6 +86,9 @@ HEADERS += \
     PointsShopDialog.h \
      pointitemwidget.h \
     rechargedialog.h \
+    systememaildialog.h \
+    voucherdialog.h \
+    orderconfirmdialog.h \
     styleutils.h \
     # models/flight.h \
     # models/order.h \

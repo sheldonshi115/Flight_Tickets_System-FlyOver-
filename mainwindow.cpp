@@ -29,6 +29,7 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include "rechargedialog.h"
+#include "systememaildialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -58,6 +59,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnOrders, &QPushButton::clicked, this, &MainWindow::on_btnOrders_clicked);
     connect(ui->actionViewOrders, &QAction::triggered, this, &MainWindow::on_btnOrders_clicked);
     connect(ui->btnProfile,&QPushButton::clicked,this,&MainWindow::clicked_btnProfile);
+    // 连接侧边栏"我的消息"按钮
+    connect(ui->btnMessages, &QPushButton::clicked, this, [this]() {
+        SystemEmailDialog* dlg = new SystemEmailDialog(m_appUser.account, this);
+        dlg->exec();
+        dlg->deleteLater();
+    });
 
     // 数据分析按钮连接
     connect(ui->btnDataAnalytics, &QPushButton::clicked, this, &MainWindow::on_btnDataAnalytics_clicked);
@@ -899,7 +906,7 @@ void MainWindow::initHomePage()
             int baseW = viewportW > 0 ? viewportW : (this->width() - sideBarW - 40);
             int minW = 680;
             int maxW = 1600; // 放宽上限，避免宽屏时内容被截断
-            int targetW = std::clamp(baseW - 40, minW, maxW);
+            // int targetW = std::clamp(baseW - 40, minW, maxW); // Unused
             inner->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
             inner->setMinimumWidth(minW);
             inner->setMaximumWidth(maxW);

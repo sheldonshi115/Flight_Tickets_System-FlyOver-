@@ -111,30 +111,28 @@ void FlightReminderScheduler::checkAndSendReminders()
         // 获取用户邮箱并发送提醒
         if (!userAccount.isEmpty()) {
             UserProfile userProfile = DBManager::instance().loadUserProfile(userAccount);
-            if (!userProfile.email.isEmpty()) {
-                qDebug() << "[FlightReminderScheduler] 向用户" << userAccount << "发送起飞提醒...";
-                
-                EmailReminder::instance().sendFlightDepartureReminder(
-                    userProfile.email,
-                    userProfile.nickname.isEmpty() ? userAccount : userProfile.nickname,
-                    flightNumber,
-                    departure,
-                    destination,
-                    departTime.toString("yyyy-MM-dd HH:mm")
-                );
-                
-                // 记录已发送的提醒
-                ReminderSentRecord record;
-                record.orderId = orderId;
-                record.flightNumber = flightNumber;
-                record.departTime = departTime;
-                m_sentRecords.append(record);
-                reminderCount++;
-                
-                qDebug() << "[FlightReminderScheduler] 成功发送提醒给" << userAccount;
-            } else {
-                qWarning() << "[FlightReminderScheduler] 用户" << userAccount << "未设置邮箱，跳过发送";
-            }
+            
+            qDebug() << "[FlightReminderScheduler] 向用户" << userAccount << "发送起飞提醒...";
+            
+            EmailReminder::instance().sendFlightDepartureReminder(
+                userProfile.email,
+                userProfile.nickname.isEmpty() ? userAccount : userProfile.nickname,
+                userAccount,
+                flightNumber,
+                departure,
+                destination,
+                departTime.toString("yyyy-MM-dd HH:mm")
+            );
+            
+            // 记录已发送的提醒
+            ReminderSentRecord record;
+            record.orderId = orderId;
+            record.flightNumber = flightNumber;
+            record.departTime = departTime;
+            m_sentRecords.append(record);
+            reminderCount++;
+            
+            qDebug() << "[FlightReminderScheduler] 成功发送提醒给" << userAccount;
         } else {
             qWarning() << "[FlightReminderScheduler] 订单" << orderNum << "没有关联用户账号";
         }

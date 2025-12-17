@@ -9,6 +9,16 @@
 #include "flight.h" // 引入 Flight 类
 #include "UserProfile.h" // 引入用户信息结构体
 #include "membersystem.h" // 引入会员系统
+
+struct SystemEmail {
+    int id;
+    QString userAccount;
+    QString subject;
+    QString body;
+    QDateTime createTime;
+    bool isRead;
+};
+
 struct MomentItem {
     int id = 0;
     QString userName = "匿名";
@@ -91,6 +101,13 @@ public:
     bool updateMomentCommentCount(int momentId);
     QList<Comment> getCommentsByMomentId(int momentId);
     QString getAvatarByNickname(const QString& nickname); // 新增：根据昵称取头像路径
+
+    // 系统邮件相关
+    bool addSystemEmail(const QString& account, const QString& subject, const QString& body);
+    QList<SystemEmail> getSystemEmails(const QString& account);
+    bool markSystemEmailAsRead(int emailId);
+    bool deleteSystemEmail(int emailId); // 新增：删除系统邮件
+
     // 新增：获取最后一次数据库错误信息（调试用）
     QString lastError() const { return db.lastError().text(); }
 };

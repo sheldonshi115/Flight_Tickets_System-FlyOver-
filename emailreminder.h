@@ -21,17 +21,17 @@ public:
     static EmailReminder& instance();
     
     // 发送购票成功提醒
-    void sendTicketBookedReminder(const QString& userEmail, const QString& userName, 
+    void sendTicketBookedReminder(const QString& userEmail, const QString& userName, const QString& account,
                                   const QString& flightNumber, const QString& departure, 
                                   const QString& arrival, const QString& departTime,
                                   const QString& seatNumber, double price);
     
     // 发送积分兑换成功提醒
-    void sendPointsRedeemedReminder(const QString& userEmail, const QString& userName, 
+    void sendPointsRedeemedReminder(const QString& userEmail, const QString& userName, const QString& account,
                                     const QString& itemName, int pointsUsed);
     
     // 发送航班起飞提醒（提醒用户还需配置定时器）
-    void sendFlightDepartureReminder(const QString& userEmail, const QString& userName,
+    void sendFlightDepartureReminder(const QString& userEmail, const QString& userName, const QString& account,
                                      const QString& flightNumber, const QString& departure,
                                      const QString& arrival, const QString& departTime);
 

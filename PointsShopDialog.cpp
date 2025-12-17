@@ -292,16 +292,14 @@ void PointsShopDialog::onBuyClicked()
     // 【新增】发送积分兑换成功邮件提醒
     if (!m_account.isEmpty()) {
         UserProfile userProfile = DBManager::instance().loadUserProfile(m_account);
-        if (!userProfile.email.isEmpty()) {
-            EmailReminder::instance().sendPointsRedeemedReminder(
-                userProfile.email,
-                userProfile.nickname.isEmpty() ? m_account : userProfile.nickname,
-                item.name,
-                item.pointsCost
-            );
-        } else {
-            qWarning() << "[PointsShopDialog] 用户" << m_account << "未设置邮箱，跳过邮件发送";
-        }
+        // 即使没有邮箱也发送系统内部提醒
+        EmailReminder::instance().sendPointsRedeemedReminder(
+            userProfile.email,
+            userProfile.nickname.isEmpty() ? m_account : userProfile.nickname,
+            m_account,
+            item.name,
+            item.pointsCost
+        );
     }
 
     refreshUserPoints();

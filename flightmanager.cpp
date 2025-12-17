@@ -5,6 +5,8 @@
 #include "seatdialog.h"
 #include "membersystem.h"
 #include "emailreminder.h"
+#include "voucherdialog.h"
+#include "orderconfirmdialog.h"
 #include <QMessageBox>
 #include <QStackedWidget>
 #include <ordermanager.h>
@@ -20,6 +22,7 @@
 #include <QDateTime>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QGridLayout>
 #include <QSet>
 #include <QGraphicsDropShadowEffect>
 #include <QInputDialog>
@@ -56,19 +59,6 @@ FlightManager::FlightManager(QWidget *parent) :
     connect(ui->btnSearch, &QPushButton::clicked, this, &FlightManager::onSearchFlightsClicked);
     connect(ui->btnRefresh, &QPushButton::clicked, this, &FlightManager::onRefreshClicked);
 
-    // 退出按钮逻辑：返回主页
-    connect(ui->btnExit, &QPushButton::clicked, this, &FlightManager::on_btnExit_clicked);
-
-    // 购票和查看座位 + 手动点击标记
-    connect(ui->btnBook, &QPushButton::clicked, this, [this]() {
-        m_isManualClick = true;
-        onBookTicketClicked();
-    });
-    connect(ui->btnSeat, &QPushButton::clicked, this, [this]() {
-        m_isManualClick = true;
-        onSelectSeatClicked();
-    });
-
     // 连接表格选择变化槽
     connect(ui->twFlightList, &QTableWidget::itemSelectionChanged,
             this, &FlightManager::on_twFlightList_itemSelectionChanged);
@@ -79,18 +69,16 @@ FlightManager::FlightManager(QWidget *parent) :
         connect(orderManager, &OrderManager::orderCanceled, this, [this](const QString& flightNum) {
             qDebug() << "收到取消订单信号，刷新航班：" << flightNum;
 
-            // 第一步：强制禁用按钮，阻断校验触发
-            ui->btnSeat->setEnabled(false);
-            ui->btnBook->setEnabled(false);
-            m_isManualClick = false; // 标记为非手动触发
+            // 标记为非手动触发
+            m_isManualClick = false;
 
-            // 第二步：清空所有状态，彻底取消选中
+            // 清空所有状态，彻底取消选中
             m_selectedSeat.clear();
             m_currentFlightNo.clear();
             ui->twFlightList->clearSelection();
             ui->twFlightList->setCurrentItem(nullptr);
             ui->twFlightList->selectRow(-1);
-            // 第三步：延迟刷新，避免事件循环拥堵
+            // 延迟刷新，避免事件循环拥堵
             QTimer::singleShot(100, this, [this]() {
                 onRefreshClicked();
                 on_twFlightList_itemSelectionChanged();
@@ -582,7 +570,7 @@ QFrame* FlightManager::createFlightCard(const Flight& flight)
     // 连接购票按钮点击事件 - 需要捕获航班号
     QString flightNo = flight.flightNumber();
     connect(bookBtn, &QPushButton::clicked, this, [this, flightNo]() {
-        // 选中该航班并触发购票流程
+        // 选中该航班并触发优化后的购票流程
         m_currentFlightNo = flightNo;
         
         // 在表格中找到对应行并选中（保持兼容）
@@ -594,9 +582,8 @@ QFrame* FlightManager::createFlightCard(const Flight& flight)
             }
         }
         
-        // 触发选座
-        m_isManualClick = true;
-        onSelectSeatClicked();
+        // 触发优化后的一站式购票流程
+        startBookingProcess();
     });
     
     rightLayout->addWidget(seatsLabel);
@@ -631,18 +618,6 @@ void FlightManager::on_btnDelete_clicked()
         onRefreshClicked();
     } else {
         QMessageBox::critical(this, "失败", "航班删除失败");
-    }
-}
-
-void FlightManager::on_btnExit_clicked()
-{
-    QWidget *mainWindow = this->topLevelWidget();
-    QStackedWidget *stackedWidget = mainWindow->findChild<QStackedWidget*>("stackedWidget");
-    QWidget *pageHome = stackedWidget->findChild<QWidget*>("pageHome");
-    if (stackedWidget && pageHome) {
-        stackedWidget->setCurrentWidget(pageHome);
-    } else {
-        QMessageBox::warning(this, "错误", "无法找到主页页面");
     }
 }
 
@@ -898,26 +873,23 @@ void FlightManager::onBookTicketClicked()
         // 【新增】发送购票成功邮件提醒
         if (!m_currentUserAccount.isEmpty()) {
             UserProfile userProfile = DBManager::instance().loadUserProfile(m_currentUserAccount);
-            if (!userProfile.email.isEmpty()) {
-                EmailReminder::instance().sendTicketBookedReminder(
-                    userProfile.email,
-                    userProfile.nickname.isEmpty() ? m_currentUserAccount : userProfile.nickname,
-                    flight.flightNumber(),
-                    flight.departureCity(),
-                    flight.arrivalCity(),
-                    flight.departureTime().toString("yyyy-MM-dd HH:mm"),
-                    newOrder.seatNumber(),
-                    priceToPay
-                );
-            } else {
-                qWarning() << "[FlightManager] 用户" << m_currentUserAccount << "未设置邮箱，跳过邮件发送";
-            }
+            // 即使没有邮箱也发送系统内部提醒
+            EmailReminder::instance().sendTicketBookedReminder(
+                userProfile.email,
+                userProfile.nickname.isEmpty() ? m_currentUserAccount : userProfile.nickname,
+                m_currentUserAccount,
+                flight.flightNumber(),
+                flight.departureCity(),
+                flight.arrivalCity(),
+                flight.departureTime().toString("yyyy-MM-dd HH:mm"),
+                newOrder.seatNumber(),
+                priceToPay
+            );
         }
 
     // 重置状态
     m_selectedSeat.clear();
     m_currentFlightNo.clear();
-    ui->btnBook->setEnabled(false);
 
     // 刷新+发送信号
     onRefreshClicked();
@@ -970,6 +942,333 @@ void FlightManager::onRefreshClicked()
         restoreSelectedFlight();
     }
     on_twFlightList_itemSelectionChanged();
+}
+
+// ========== 优化后的一站式购票流程（支持返回上一步） ==========
+void FlightManager::startBookingProcess()
+{
+    // 步骤1：获取选中的航班
+    Flight flight = getSelectedFlight();
+    if (flight.flightNumber().isEmpty()) {
+        QMessageBox::warning(this, "提示", "请先选择航班");
+        return;
+    }
+
+    if (flight.availableSeats() <= 0) {
+        QMessageBox::warning(this, "提示", "该航班已无可用座位！");
+        return;
+    }
+
+    // 准备座位布局数据
+    FlightInfo info;
+    info.flightNumber = flight.flightNumber();
+    info.departureCity = flight.departureCity();
+    info.arrivalCity = flight.arrivalCity();
+    info.dateTime = flight.departureTime().toString("yyyy-MM-dd HH:mm");
+
+    int totalSeats = flight.totalSeats();
+    int availableSeats = flight.availableSeats();
+    int soldSeats = totalSeats - availableSeats;
+    int seatsPerRow = 6;
+    int totalRows = (totalSeats + seatsPerRow - 1) / seatsPerRow;
+    
+    QVector<SeatData> seats;
+    QString seatCols = "ABCDEF";
+    QSet<QString> soldSeatIds;
+    int soldCount = 0;
+    uint seed = qHash(flight.flightNumber());
+    
+    while (soldCount < soldSeats) {
+        int randRow = (seed % totalRows) + 1;
+        int randCol = (seed / totalRows) % seatsPerRow;
+        seed = seed * 1103515245 + 12345;
+        
+        QString seatId = QString::number(randRow) + seatCols[randCol];
+        if (!soldSeatIds.contains(seatId)) {
+            soldSeatIds.insert(seatId);
+            soldCount++;
+        }
+        if (soldCount >= totalSeats) break;
+    }
+    
+    for (int row = 1; row <= totalRows; row++) {
+        for (int col = 0; col < seatsPerRow; col++) {
+            QString seatId = QString::number(row) + seatCols[col];
+            SeatData seat;
+            seat.seatId = seatId;
+            seat.state = soldSeatIds.contains(seatId) ? Sold : Available;
+            seat.isWindow = (col == 0 || col == 5);
+            seat.isAisle = (col == 2 || col == 3);
+            seats.append(seat);
+        }
+    }
+    info.allSeats = seats;
+
+    // 购票流程变量
+    QString selectedSeat;
+    double originalPrice = flight.price();
+    QString appliedVoucherId;
+    QString appliedVoucherCode;
+    double voucherValue = 0.0;
+    double finalPrice = originalPrice;
+
+    int currentStep = 1;  // 1=选座, 2=代金券, 3=确认订单
+
+    while (currentStep >= 1 && currentStep <= 3) {
+        if (currentStep == 1) {
+            // 步骤1：选座对话框
+            SeatDialog seatDialog(info, this);
+            if (seatDialog.exec() != QDialog::Accepted) {
+                return; // 用户取消，退出整个流程
+            }
+            selectedSeat = seatDialog.getSelectedSeatId();
+            if (selectedSeat.isEmpty()) {
+                QMessageBox::warning(this, "提示", "请选择座位！");
+                continue;
+            }
+            currentStep = 2;
+        }
+        else if (currentStep == 2) {
+            // 步骤2：代金券选择对话框
+            if (!m_currentUserAccount.isEmpty()) {
+                VoucherDialog voucherDialog(m_currentUserAccount, originalPrice, this);
+                if (voucherDialog.exec() == QDialog::Accepted) {
+                    appliedVoucherId = voucherDialog.getSelectedVoucherId();
+                    appliedVoucherCode = voucherDialog.getSelectedVoucherCode();
+                    voucherValue = voucherDialog.getVoucherValue();
+                    finalPrice = voucherDialog.getFinalPrice();
+                    currentStep = 3;
+                } else {
+                    // 用户点击返回
+                    currentStep = 1;
+                }
+            } else {
+                currentStep = 3;
+            }
+        }
+        else if (currentStep == 3) {
+            // 步骤3：订单确认对话框
+            MemberInfo memberInfo;
+            if (!m_currentUserAccount.isEmpty()) {
+                memberInfo = MemberSystem::instance().getMemberInfo(m_currentUserAccount);
+            }
+
+            OrderConfirmDialog::OrderInfo orderInfo;
+            orderInfo.flightNumber = flight.flightNumber();
+            orderInfo.departureCity = flight.departureCity();
+            orderInfo.arrivalCity = flight.arrivalCity();
+            orderInfo.departureTime = flight.departureTime().toString("yyyy-MM-dd HH:mm");
+            orderInfo.seatNumber = selectedSeat;
+            orderInfo.originalPrice = originalPrice;
+            orderInfo.voucherCode = appliedVoucherCode;
+            orderInfo.voucherValue = voucherValue;
+            orderInfo.finalPrice = finalPrice;
+            orderInfo.userBalance = memberInfo.balance;
+
+            OrderConfirmDialog confirmDialog(orderInfo, this);
+            if (confirmDialog.exec() == QDialog::Accepted) {
+                // 执行购票逻辑
+                executeBooking(flight, selectedSeat, appliedVoucherId, appliedVoucherCode, voucherValue, finalPrice, memberInfo);
+                return;
+            } else {
+                // 用户点击返回
+                currentStep = 2;
+            }
+        }
+    }
+}
+
+// 执行购票逻辑（从 startBookingProcess 中提取）
+void FlightManager::executeBooking(const Flight& flight, const QString& selectedSeat,
+                                    const QString& appliedVoucherId, const QString& appliedVoucherCode,
+                                    double voucherValue, double finalPrice, const MemberInfo& memberInfo)
+{
+    // 检查余额
+    if (!m_currentUserAccount.isEmpty() && memberInfo.balance < finalPrice) {
+        QMessageBox::critical(this, "余额不足",
+            QString("您的飞机币余额不足！\n当前余额：¥%1\n应付金额：¥%2")
+            .arg(memberInfo.balance, 0, 'f', 2)
+            .arg(finalPrice, 0, 'f', 2));
+        return;
+    }
+
+    // 扣除飞机币
+    if (!m_currentUserAccount.isEmpty() && finalPrice > 0.0) {
+        if (!MemberSystem::instance().deductBalance(m_currentUserAccount, finalPrice,
+            QString("购买航班 %1 座位 %2").arg(flight.flightNumber()).arg(selectedSeat))) {
+            QMessageBox::critical(this, "失败", "扣除飞机币失败，请重试！");
+            return;
+        }
+    }
+
+    // 更新可用座位
+    Flight updatedFlight = flight;
+    updatedFlight.setAvailableSeats(flight.availableSeats() - 1);
+    if (!DBManager::instance().updateFlight(updatedFlight)) {
+        // 恢复飞机币
+        if (!m_currentUserAccount.isEmpty() && finalPrice > 0.0) {
+            MemberSystem::instance().addBalance(m_currentUserAccount, finalPrice, "座位更新失败，退款");
+        }
+        QMessageBox::critical(this, "失败", "座位更新失败，请重试！");
+        return;
+    }
+
+    // 生成订单
+    Order newOrder;
+    newOrder.setOrderNumber(generateOrderNumber());
+    newOrder.setFlightNumber(flight.flightNumber());
+    newOrder.setDepartureCity(flight.departureCity());
+    newOrder.setArrivalCity(flight.arrivalCity());
+    newOrder.setDepartTime(flight.departureTime());
+    newOrder.setSeatNumber(selectedSeat);
+    newOrder.setPrice(finalPrice);
+    newOrder.setStatus("已支付");
+    newOrder.setUserId(m_currentUserAccount);
+
+    if (!DBManager::instance().addOrder(newOrder)) {
+        // 恢复座位和飞机币
+        updatedFlight.setAvailableSeats(flight.availableSeats());
+        DBManager::instance().updateFlight(updatedFlight);
+        if (!m_currentUserAccount.isEmpty() && finalPrice > 0.0) {
+            MemberSystem::instance().addBalance(m_currentUserAccount, finalPrice, "订单创建失败，退款");
+        }
+        QMessageBox::critical(this, "失败", "订单创建失败！");
+        return;
+    }
+
+    // 标记座位为已售
+    DBManager::instance().markSeatAsSold(flight.flightNumber(), selectedSeat);
+
+    // 标记代金券已用
+    if (!appliedVoucherId.isEmpty() && !m_currentUserAccount.isEmpty()) {
+        MemberSystem::instance().markVoucherUsed(appliedVoucherId, newOrder.orderNumber());
+    }
+
+    // 增加飞行里程
+    if (!m_currentUserAccount.isEmpty()) {
+        double distance = calculateFlightDistance(flight.departureCity(), flight.arrivalCity());
+        MemberSystem::instance().addMileage(m_currentUserAccount, distance);
+    }
+
+    // 增加积分
+    if (!m_currentUserAccount.isEmpty()) {
+        int pointsEarned = static_cast<int>(qFloor(finalPrice));
+        if (pointsEarned > 0) {
+            MemberSystem::instance().addPoints(m_currentUserAccount, pointsEarned);
+        }
+    }
+
+    // 发送购票成功邮件提醒
+    if (!m_currentUserAccount.isEmpty()) {
+        UserProfile userProfile = DBManager::instance().loadUserProfile(m_currentUserAccount);
+        EmailReminder::instance().sendTicketBookedReminder(
+            userProfile.email,
+            userProfile.nickname.isEmpty() ? m_currentUserAccount : userProfile.nickname,
+            m_currentUserAccount,
+            flight.flightNumber(),
+            flight.departureCity(),
+            flight.arrivalCity(),
+            flight.departureTime().toString("yyyy-MM-dd HH:mm"),
+            selectedSeat,
+            finalPrice
+        );
+    }
+
+    // 更新座位变量
+    m_selectedSeat = selectedSeat;
+
+    // 刷新界面
+    onRefreshClicked();
+
+    // 发送订单创建信号
+    emit orderCreated();
+
+    // 显示精美的成功提示对话框
+    QDialog *successDialog = new QDialog(this);
+    successDialog->setWindowTitle("购票成功");
+    successDialog->setMinimumSize(450, 420);
+    successDialog->setStyleSheet(R"(
+        QDialog {
+            background-color: #F0FDF4;
+        }
+        QLabel {
+            background-color: transparent;
+        }
+    )");
+
+    QVBoxLayout *layout = new QVBoxLayout(successDialog);
+    layout->setSpacing(20);
+    layout->setContentsMargins(40, 30, 40, 30);
+
+    // 成功图标
+    QLabel *iconLabel = new QLabel("✅", successDialog);
+    iconLabel->setStyleSheet("font-size: 50px; background: transparent;");
+    iconLabel->setAlignment(Qt::AlignCenter);
+    layout->addWidget(iconLabel);
+
+    // 标题
+    QLabel *titleLabel = new QLabel("购票成功！", successDialog);
+    titleLabel->setStyleSheet("font-size: 24px; font-weight: bold; color: #166534; background: transparent;");
+    titleLabel->setAlignment(Qt::AlignCenter);
+    layout->addWidget(titleLabel);
+
+    // 信息区域（使用简单的文本显示）
+    QString infoText = QString(
+        "<div style='background-color: white; padding: 20px; border-radius: 10px; border: 1px solid #BBF7D0;'>"
+        "<p style='margin: 8px 0;'><span style='color: #6B7280;'>航班号：</span>"
+        "<span style='color: #3B82F6; font-weight: bold;'>%1</span></p>"
+        "<p style='margin: 8px 0;'><span style='color: #6B7280;'>路线：</span>"
+        "<span style='color: #1F2937; font-weight: bold;'>%2 → %3</span></p>"
+        "<p style='margin: 8px 0;'><span style='color: #6B7280;'>座位号：</span>"
+        "<span style='color: #10B981; font-weight: bold;'>%4</span></p>"
+        "<p style='margin: 8px 0;'><span style='color: #6B7280;'>支付金额：</span>"
+        "<span style='color: #EF4444; font-weight: bold; font-size: 18px;'>¥%5</span></p>"
+        "</div>"
+    ).arg(flight.flightNumber(), flight.departureCity(), flight.arrivalCity(), 
+          selectedSeat, QString::number(finalPrice, 'f', 2));
+
+    QLabel *infoLabel = new QLabel(successDialog);
+    infoLabel->setTextFormat(Qt::RichText);
+    infoLabel->setText(infoText);
+    infoLabel->setStyleSheet("background: transparent; padding: 0; margin: 0;");
+    infoLabel->setWordWrap(true);
+    layout->addWidget(infoLabel);
+
+    // 祝福语
+    QLabel *wishLabel = new QLabel("🛫 祝您旅途愉快！", successDialog);
+    wishLabel->setStyleSheet("font-size: 15px; color: #059669; background: transparent;");
+    wishLabel->setAlignment(Qt::AlignCenter);
+    layout->addWidget(wishLabel);
+
+    layout->addStretch();
+
+    // 确认按钮
+    QPushButton *okBtn = new QPushButton("确认", successDialog);
+    okBtn->setFixedSize(150, 45);
+    okBtn->setStyleSheet(R"(
+        QPushButton {
+            background-color: #10B981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        QPushButton:hover {
+            background-color: #059669;
+        }
+    )");
+    okBtn->setCursor(Qt::PointingHandCursor);
+    connect(okBtn, &QPushButton::clicked, successDialog, &QDialog::accept);
+    
+    QHBoxLayout *btnLayout = new QHBoxLayout();
+    btnLayout->addStretch();
+    btnLayout->addWidget(okBtn);
+    btnLayout->addStretch();
+    layout->addLayout(btnLayout);
+
+    successDialog->exec();
+    delete successDialog;
 }
 
 void FlightManager::onSelectSeatClicked()
@@ -1104,14 +1403,7 @@ void FlightManager::on_twFlightList_itemSelectionChanged()
         m_selectedSeat.clear();
     }
 
-    // 按钮状态控制
-    ui->btnSeat->setEnabled(hasSelection);
-    bool canBook = hasSelection && !m_selectedSeat.isEmpty();
-    ui->btnBook->setEnabled(canBook);
-    ui->btnBook->setStyleSheet(canBook ?
-                                   "background-color: #4CAF50; color: white; border-radius: 6px;" :
-                                   "");
-
+    // 管理员按钮状态控制
     if (m_isAdminMode) {
         ui->btnEdit->setEnabled(hasSelection);
         ui->btnDelete->setEnabled(hasSelection);
@@ -1241,21 +1533,6 @@ void FlightManager::applyModernStyle()
         ui->btnRefresh->setStyleSheet(secondaryBtnStyle);
         ui->btnRefresh->setCursor(Qt::PointingHandCursor);
         ui->btnRefresh->setText("🔄 刷新");
-    }
-    if (ui->btnSeat) {
-        ui->btnSeat->setStyleSheet(accentBtnStyle);
-        ui->btnSeat->setCursor(Qt::PointingHandCursor);
-        ui->btnSeat->setText("💺 选择座位");
-    }
-    if (ui->btnBook) {
-        ui->btnBook->setStyleSheet(primaryBtnStyle);
-        ui->btnBook->setCursor(Qt::PointingHandCursor);
-        ui->btnBook->setText("🎫 确认购票");
-    }
-    if (ui->btnExit) {
-        ui->btnExit->setStyleSheet(secondaryBtnStyle);
-        ui->btnExit->setCursor(Qt::PointingHandCursor);
-        ui->btnExit->setText("← 返回");
     }
     if (ui->btnAdd) {
         ui->btnAdd->setStyleSheet(primaryBtnStyle);

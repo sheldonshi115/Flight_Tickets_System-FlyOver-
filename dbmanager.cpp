@@ -12,7 +12,7 @@
 const QString DBManager::DB_NAME = "flight_ticket_db";
 const QString DBManager::DB_HOST = "localhost";
 const QString DBManager::DB_USER = "root";       // 你的MySQL用户名
-const QString DBManager::DB_PWD = ""; // 你的MySQL密码
+const QString DBManager::DB_PWD = "dsy20241431@"; // 你的MySQL密码
 const int DBManager::DB_PORT = 3306;             // 默认端口
 
 // 单例模式：静态实例
@@ -31,8 +31,8 @@ DBManager::DBManager(QObject *parent) : QObject(parent)
     } else {
         // 创建MySQL连接
         db = QSqlDatabase::addDatabase("QODBC", "flight_conn");
-        db.setDatabaseName(QString("DRIVER={MySQL ODBC 8.0 ANSI Driver};SERVER=%1;DATABASE=%2;UID=%3;PWD=%4;PORT=%5;")
-                               .arg(DB_HOST).arg(DB_NAME).arg(DB_USER).arg(DB_PWD).arg(DB_PORT));
+        db.setDatabaseName(QString("DRIVER={MySQL ODBC 8.0 Unicode Driver};SERVER=%1;DATABASE=%2;UID=%3;PWD=%4;PORT=%5;CHARSET=utf8mb4;")
+                               .arg(DB_HOST, DB_NAME, DB_USER, DB_PWD, QString::number(DB_PORT)));
 
         // 尝试打开连接
         if (!db.open()) {
@@ -223,9 +223,21 @@ bool DBManager::initDatabase()
     )
 )";
 
+    QString createSystemEmails = R"(
+        CREATE TABLE IF NOT EXISTS system_emails (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user_account VARCHAR(50) NOT NULL,
+            subject VARCHAR(255) NOT NULL,
+            body TEXT NOT NULL,
+            create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            is_read TINYINT DEFAULT 0,
+            FOREIGN KEY (user_account) REFERENCES users(account) ON DELETE CASCADE
+        )
+    )";
+
 
     // 执行建表语句
-    if(query.exec(createUsers) && query.exec(createFlights) && query.exec(createSeats) && query.exec(createOrders)&& query.exec(createMoments) && query.exec(createComments)) {
+    if(query.exec(createUsers) && query.exec(createFlights) && query.exec(createSeats) && query.exec(createOrders)&& query.exec(createMoments) && query.exec(createComments) && query.exec(createSystemEmails)) {
         qDebug() << "数据表检查/创建成功。";
         // 初始化会员系统（members 表与 transactions 表）
         // 使用 MemberSystem 单例来创建必要的会员表和交易记录表
@@ -975,6 +987,72 @@ QString DBManager::getAvatarByNickname(const QString& nickname) {
     }
     return QString();
 }
+
+bool DBManager::addSystemEmail(const QString& account, const QString& subject, const QString& body)
+{
+    if (!db.isOpen()) return false;
+
+    QSqlQuery query(db);
+    
+    // 使用位置参数绑定，避免编码问题
+    query.prepare("INSERT INTO system_emails (user_account, subject, body, create_time, is_read) "
+                  "VALUES (?, ?, ?, ?, 0)");
+    query.addBindValue(account);
+    query.addBindValue(subject);
+    query.addBindValue(body);
+    query.addBindValue(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+
+    if (!query.exec()) {
+        qWarning() << "addSystemEmail failed:" << query.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+QList<SystemEmail> DBManager::getSystemEmails(const QString& account)
+{
+    QList<SystemEmail> emails;
+    if (!db.isOpen()) return emails;
+
+    QSqlQuery query(db);
+    QString sql = QString("SELECT id, user_account, subject, body, create_time, is_read "
+                  "FROM system_emails WHERE user_account = '%1' ORDER BY create_time DESC").arg(account);
+
+    if (query.exec(sql)) {
+        while (query.next()) {
+            SystemEmail email;
+            email.id = query.value("id").toInt();
+            email.userAccount = query.value("user_account").toString();
+            email.subject = query.value("subject").toString();
+            email.body = query.value("body").toString();
+            email.createTime = query.value("create_time").toDateTime();
+            email.isRead = query.value("is_read").toBool();
+            emails.append(email);
+        }
+    } else {
+        qWarning() << "getSystemEmails failed:" << query.lastError().text();
+    }
+    return emails;
+}
+
+bool DBManager::markSystemEmailAsRead(int emailId)
+{
+    if (!db.isOpen()) return false;
+
+    QSqlQuery query(db);
+    QString sql = QString("UPDATE system_emails SET is_read = 1 WHERE id = %1").arg(emailId);
+    return query.exec(sql);
+}
+
+bool DBManager::deleteSystemEmail(int emailId)
+{
+    if (!db.isOpen()) return false;
+
+    QSqlQuery query(db);
+    QString sql = QString("DELETE FROM system_emails WHERE id = %1").arg(emailId);
+    return query.exec(sql);
+}
+
 
 
 

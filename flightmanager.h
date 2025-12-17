@@ -13,6 +13,7 @@
 #include <QFrame>
 #include "flight.h"    // 包含 Flight 数据结构
 #include "commondefs.h"// 订单类（需确保项目中有该头文件）
+#include "membersystem.h" // MemberInfo 类型
 
 namespace Ui {
 class FlightManager;
@@ -48,11 +49,14 @@ private slots:
     void onSelectSeatClicked();             // 选择座位
     void onBookTicketClicked();             // 确认购票
     void onRefreshClicked();                // 刷新航班列表
+    void startBookingProcess();             // 一站式购票流程
+    void executeBooking(const Flight& flight, const QString& selectedSeat,
+                        const QString& appliedVoucherId, const QString& appliedVoucherCode,
+                        double voucherValue, double finalPrice, const MemberInfo& memberInfo);  // 执行购票逻辑
 
     // 自动关联的槽函数（Qt 自动识别命名规则）
     void on_twFlightList_itemSelectionChanged(); // 航班表格选中行变化
     void on_btnDelete_clicked();            // 删除航班
-    void on_btnExit_clicked();              // 返回主页
 
 private:
     Ui::FlightManager *ui;                  // UI 指针

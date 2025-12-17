@@ -174,6 +174,22 @@
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="btnMessages">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>45</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">font-size: 15px; border-radius: 8px; text-align: left; padding-left: 20px;</string>
+         </property>
+         <property name="text">
+          <string>📧  系统邮箱</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="btnDataAnalytics">
          <property name="minimumSize">
           <size>
