@@ -577,8 +577,14 @@ QString MemberSystem::redeemPointsForItem(const QString& userId, const QString& 
     QString giftDesc;
 
     // 兼容前端使用的 id（PointsShopDialog 可能使用 itm1/itm2/itm3）
-    if (itemId == "voucher_5" || itemId == "itm1") voucherValue = 5.0, recordedItemId = "voucher_5";
-    else if (itemId == "voucher_10" || itemId == "itm2") voucherValue = 10.0, recordedItemId = "voucher_10";
+    // 2025-12: 积分兑换规则调整为 500 积分兑 50 元，900 积分兑 100 元
+    if (itemId == "voucher_5" || itemId == "voucher_50" || itemId == "itm1") {
+        voucherValue = 50.0;
+        recordedItemId = "voucher_50";
+    } else if (itemId == "voucher_10" || itemId == "voucher_100" || itemId == "itm2") {
+        voucherValue = 100.0;
+        recordedItemId = "voucher_100";
+    }
     else if (itemId == "itm3" || itemId == "random_gift") {
         // 随机礼品：从备选列表中随机选一项，并通过通知告知用户
         QStringList gifts = { QString::fromUtf8("主题行李牌"), QString::fromUtf8("航旅水杯"), QString::fromUtf8("折叠充电线"), QString::fromUtf8("数字会员券(下次加赠)") };

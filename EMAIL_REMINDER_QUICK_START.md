@@ -183,10 +183,10 @@ reminder.sendTicketBookedReminder(
 
 // 发送积分兑换邮件
 reminder.sendPointsRedeemedReminder(
-    "user@example.com",      // 收件人邮箱
-    "用户名",                // 用户昵称
-    "10元代金券",           // 商品名称
-    900                      // 消耗的积分
+  "user@example.com",      // 收件人邮箱
+  "用户名",                // 用户昵称
+  "100元代金券",          // 商品名称
+  900                      // 消耗的积分
 );
 
 // 发送航班起飞提醒

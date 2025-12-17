@@ -3,8 +3,8 @@
         <file>style.qss</file>
         <file>images/ai_avatar.png</file>
         <file>images/defaultAvatar.jpg</file>
-        <file>images/coupon5.svg</file>
-        <file>images/coupon10.svg</file>
+        <file>images/coupon50.svg</file>
+        <file>images/coupon100.svg</file>
         <file>images/gift.svg</file>
     </qresource>
 </RCC>

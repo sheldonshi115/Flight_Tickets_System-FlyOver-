@@ -9,7 +9,7 @@ struct ShopItem {
     QString name;
     int pointsCost;
     QString description;
-    QString imagePath; // resource path, e.g. :/resources/coupon5.png
+    QString imagePath; // resource path, e.g. :/resources/coupon50.svg
 };
 
 class QListWidget;

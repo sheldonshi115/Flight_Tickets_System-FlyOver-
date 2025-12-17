@@ -901,9 +901,9 @@ void MainWindow::initHomePage()
         QWidget *inner = ui->homeScrollArea->widget();
         if (inner) {
             inner->setContentsMargins(0, 0, 0, 0);
-            int sideBarW = (ui->sideBar ? ui->sideBar->width() : 180);
-            int viewportW = ui->homeScrollArea->viewport() ? ui->homeScrollArea->viewport()->width() : 0;
-            int baseW = viewportW > 0 ? viewportW : (this->width() - sideBarW - 40);
+            // int sideBarW = (ui->sideBar ? ui->sideBar->width() : 180); // Unused
+            // int viewportW = ui->homeScrollArea->viewport() ? ui->homeScrollArea->viewport()->width() : 0; // Unused
+            // int baseW = viewportW > 0 ? viewportW : (this->width() - sideBarW - 40); // Unused
             int minW = 680;
             int maxW = 1600; // 放宽上限，避免宽屏时内容被截断
             // int targetW = std::clamp(baseW - 40, minW, maxW); // Unused

@@ -132,8 +132,8 @@ void PointsShopDialog::loadItems()
 {
     // 简单的静态商品列表
     m_items = {
-        {"itm1", QString::fromUtf8("5元代金券"), 500, QString::fromUtf8("可抵扣5元人民币的订单金额"), QStringLiteral(":/resources/images/coupon5.svg")},
-        {"itm2", QString::fromUtf8("10元代金券"), 900, QString::fromUtf8("可抵扣10元人民币的订单金额"), QStringLiteral(":/resources/images/coupon10.svg")},
+        {"itm1", QString::fromUtf8("50元代金券"), 500, QString::fromUtf8("可抵扣50元人民币的订单金额"), QStringLiteral(":/resources/images/coupon50.svg")},
+        {"itm2", QString::fromUtf8("100元代金券"), 900, QString::fromUtf8("可抵扣100元人民币的订单金额"), QStringLiteral(":/resources/images/coupon100.svg")},
         {"itm3", QString::fromUtf8("随机礼品"), 1500, QString::fromUtf8("系统随机发送小礼品一份"), QStringLiteral(":/resources/images/gift.svg")}
     };
 

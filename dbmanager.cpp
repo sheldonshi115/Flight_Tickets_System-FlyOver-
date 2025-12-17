@@ -12,7 +12,7 @@
 const QString DBManager::DB_NAME = "flight_ticket_db";
 const QString DBManager::DB_HOST = "localhost";
 const QString DBManager::DB_USER = "root";       // 你的MySQL用户名
-const QString DBManager::DB_PWD = "dsy20241431@"; // 你的MySQL密码
+const QString DBManager::DB_PWD = "pwd"; // 你的MySQL密码
 const int DBManager::DB_PORT = 3306;             // 默认端口
 
 // 单例模式：静态实例

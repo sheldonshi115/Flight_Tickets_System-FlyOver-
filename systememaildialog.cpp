@@ -259,7 +259,7 @@ void SystemEmailDialog::updateDetailView(const SystemEmail& email)
     m_deleteButton->setVisible(true); // 显示删除按钮
 }
 
-void SystemEmailDialog::onFilterChanged(int index)
+void SystemEmailDialog::onFilterChanged(int /*index*/)
 {
     loadEmails();
 }

@@ -29,8 +29,8 @@ void OrderConfirmDialog::setupUI()
     )");
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    mainLayout->setSpacing(15);
-    mainLayout->setContentsMargins(25, 25, 25, 25);
+    mainLayout->setSpacing(18);
+    mainLayout->setContentsMargins(24, 20, 24, 20);
 
     // 标题
     QLabel *titleLabel = new QLabel("✈️ 订单确认", this);
@@ -44,12 +44,12 @@ void OrderConfirmDialog::setupUI()
         QFrame {
             background-color: #FFFFFF;
             border-radius: 12px;
-            border: 1px solid #E5E7EB;
+            border: none;
         }
     )");
     QVBoxLayout *flightLayout = new QVBoxLayout(flightCard);
-    flightLayout->setSpacing(12);
-    flightLayout->setContentsMargins(20, 20, 20, 20);
+    flightLayout->setSpacing(10);
+    flightLayout->setContentsMargins(18, 18, 18, 18);
 
     // 航班号
     QLabel *flightNoLabel = new QLabel(QString("航班号：%1").arg(m_info.flightNumber), flightCard);
@@ -58,6 +58,7 @@ void OrderConfirmDialog::setupUI()
 
     // 路线
     QHBoxLayout *routeLayout = new QHBoxLayout();
+    routeLayout->setSpacing(12);
     QLabel *depLabel = new QLabel(m_info.departureCity, flightCard);
     depLabel->setStyleSheet("font-size: 20px; font-weight: bold; color: #1F2937;");
     QLabel *arrowLabel = new QLabel("  ✈️ →  ", flightCard);
@@ -72,7 +73,7 @@ void OrderConfirmDialog::setupUI()
 
     // 出发时间
     QLabel *timeLabel = new QLabel(QString("🕐 出发时间：%1").arg(m_info.departureTime), flightCard);
-    timeLabel->setStyleSheet("font-size: 14px; color: #6B7280;");
+    timeLabel->setStyleSheet("font-size: 14px; color: #4B5563;");
     flightLayout->addWidget(timeLabel);
 
     // 座位号
@@ -88,12 +89,12 @@ void OrderConfirmDialog::setupUI()
         QFrame {
             background-color: #FFFFFF;
             border-radius: 12px;
-            border: 1px solid #E5E7EB;
+            border: none;
         }
     )");
     QVBoxLayout *priceLayout = new QVBoxLayout(priceCard);
     priceLayout->setSpacing(10);
-    priceLayout->setContentsMargins(20, 15, 20, 15);
+    priceLayout->setContentsMargins(18, 16, 18, 16);
 
     // 原价
     QHBoxLayout *origRow = new QHBoxLayout();

@@ -1080,8 +1080,8 @@ void FlightManager::startBookingProcess()
 
 // 执行购票逻辑（从 startBookingProcess 中提取）
 void FlightManager::executeBooking(const Flight& flight, const QString& selectedSeat,
-                                    const QString& appliedVoucherId, const QString& appliedVoucherCode,
-                                    double voucherValue, double finalPrice, const MemberInfo& memberInfo)
+                                    const QString& appliedVoucherId, const QString& /*appliedVoucherCode*/,
+                                    double /*voucherValue*/, double finalPrice, const MemberInfo& memberInfo)
 {
     // 检查余额
     if (!m_currentUserAccount.isEmpty() && memberInfo.balance < finalPrice) {
@@ -1212,27 +1212,38 @@ void FlightManager::executeBooking(const Flight& flight, const QString& selected
     titleLabel->setAlignment(Qt::AlignCenter);
     layout->addWidget(titleLabel);
 
-    // 信息区域（使用简单的文本显示）
-    QString infoText = QString(
-        "<div style='background-color: white; padding: 20px; border-radius: 10px; border: 1px solid #BBF7D0;'>"
-        "<p style='margin: 8px 0;'><span style='color: #6B7280;'>航班号：</span>"
-        "<span style='color: #3B82F6; font-weight: bold;'>%1</span></p>"
-        "<p style='margin: 8px 0;'><span style='color: #6B7280;'>路线：</span>"
-        "<span style='color: #1F2937; font-weight: bold;'>%2 → %3</span></p>"
-        "<p style='margin: 8px 0;'><span style='color: #6B7280;'>座位号：</span>"
-        "<span style='color: #10B981; font-weight: bold;'>%4</span></p>"
-        "<p style='margin: 8px 0;'><span style='color: #6B7280;'>支付金额：</span>"
-        "<span style='color: #EF4444; font-weight: bold; font-size: 18px;'>¥%5</span></p>"
-        "</div>"
-    ).arg(flight.flightNumber(), flight.departureCity(), flight.arrivalCity(), 
-          selectedSeat, QString::number(finalPrice, 'f', 2));
+    // 信息区域（使用卡片与栅格布局，避免文本框线）
+    QFrame *infoCard = new QFrame(successDialog);
+    infoCard->setStyleSheet(R"(
+        QFrame {
+            background-color: #FFFFFF;
+            border: none;
+            border-radius: 12px;
+        }
+    )");
+    QGridLayout *infoGrid = new QGridLayout(infoCard);
+    infoGrid->setContentsMargins(18, 14, 18, 14);
+    infoGrid->setHorizontalSpacing(8);
+    infoGrid->setVerticalSpacing(10);
 
-    QLabel *infoLabel = new QLabel(successDialog);
-    infoLabel->setTextFormat(Qt::RichText);
-    infoLabel->setText(infoText);
-    infoLabel->setStyleSheet("background: transparent; padding: 0; margin: 0;");
-    infoLabel->setWordWrap(true);
-    layout->addWidget(infoLabel);
+    auto makeRow = [&](int row, const QString &label, const QString &value, const QString &valueColor, int valueSize, bool bold = true) {
+        QLabel *l = new QLabel(label, infoCard);
+        l->setStyleSheet("font-size: 14px; color: #6B7280;");
+        QLabel *v = new QLabel(value, infoCard);
+        v->setStyleSheet(QString("font-size: %1px; color: %2; font-weight: %3;")
+                         .arg(valueSize)
+                         .arg(valueColor)
+                         .arg(bold ? "600" : "400"));
+        infoGrid->addWidget(l, row, 0, Qt::AlignLeft);
+        infoGrid->addWidget(v, row, 1, Qt::AlignRight);
+    };
+
+    makeRow(0, "航班号：", flight.flightNumber(), "#2563EB", 16);
+    makeRow(1, "路线：", QString("%1 → %2").arg(flight.departureCity(), flight.arrivalCity()), "#111827", 16, true);
+    makeRow(2, "座位号：", selectedSeat, "#0EA5E9", 16);
+    makeRow(3, "支付金额：", QString("¥%1").arg(finalPrice, 0, 'f', 2), "#EF4444", 18);
+
+    layout->addWidget(infoCard);
 
     // 祝福语
     QLabel *wishLabel = new QLabel("🛫 祝您旅途愉快！", successDialog);
