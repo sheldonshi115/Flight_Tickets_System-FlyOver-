@@ -47,6 +47,7 @@ SOURCES += \
     systememaildialog.cpp \
     voucherdialog.cpp \
     orderconfirmdialog.cpp \
+    announcementmarquee.cpp \
     # models/flight.cpp \
     # models/order.cpp \
     models/user.cpp
@@ -90,6 +91,7 @@ HEADERS += \
     voucherdialog.h \
     orderconfirmdialog.h \
     styleutils.h \
+    announcementmarquee.h \
     # models/flight.h \
     # models/order.h \
     models/user.h

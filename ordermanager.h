@@ -36,6 +36,7 @@ private slots:
     void on_btnCloseDetail_clicked(); // 关闭订单详情
     void on_btnExit_clicked(); // 返回主页
     void on_twOrderList_itemSelectionChanged(); // 表格选择变化
+    void on_btnBoardingPass_clicked(); // 打印登机牌
 
 private:
     Ui::OrderManager *ui;

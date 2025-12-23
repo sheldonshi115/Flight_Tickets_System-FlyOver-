@@ -9,6 +9,7 @@
 #include "languagemanager.h"
 #include "notificationmanager.h"
 #include "membersystem.h"
+#include "announcementmarquee.h"
 #include <QPropertyAnimation>
 #include <QEvent>
 #include <QLabel>
@@ -51,6 +52,7 @@ private:
     QLabel *m_pointsLabel = nullptr;         // 积分显示
     QLabel *m_balanceLabel = nullptr;        // 飞机币余额
     QLabel *m_mileageLabel = nullptr;        // 飞行里程
+    AnnouncementMarquee *m_announcementMarquee = nullptr; // 公告滚动条
     
     // 浮动按钮控制方法
     void slideOutFloatingButton();

@@ -467,6 +467,34 @@ QPushButton:hover:enabled {
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="btnBoardingPass">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #00BFA5;
+    color: white;
+    border-radius: 4px;
+    padding: 8px 20px;
+    font-weight: bold;
+}
+QPushButton:disabled {
+    background-color: #80CBC4;
+}
+QPushButton:hover:enabled {
+    background-color: #00897B;
+}</string>
+        </property>
+        <property name="text">
+         <string>🎫 打印登机牌</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <spacer name="horizontalSpacer_Buttons">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>

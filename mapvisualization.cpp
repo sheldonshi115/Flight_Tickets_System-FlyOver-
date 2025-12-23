@@ -10,20 +10,86 @@ MapVisualization::MapVisualization(QWidget *parent)
     , m_minLon(73.0)
     , m_maxLon(135.0)
     , m_margin(50)
+    , m_zoomLevel(1.0)
+    , m_minZoom(0.5)
+    , m_maxZoom(3.0)
+    , m_panOffset(0, 0)
+    , m_isDragging(false)
 {
     setMouseTracking(true);
     setMinimumSize(800, 600);
+    setFocusPolicy(Qt::StrongFocus);
     
     initChinaCities();
+    initChinaMapOutline();
 }
 
 MapVisualization::~MapVisualization()
 {
 }
 
+void MapVisualization::initChinaMapOutline()
+{
+    // 简化的中国地图轮廓（主要边界点）
+    QPolygonF mainOutline;
+    
+    // 中国大陆主要边界点（经纬度简化）
+    mainOutline << QPointF(121.5, 53.3)   // 东北-漠河
+                << QPointF(135.0, 48.4)   // 东北角
+                << QPointF(131.0, 43.0)   // 珲春
+                << QPointF(129.5, 42.0)
+                << QPointF(124.4, 40.0)   // 丹东
+                << QPointF(122.1, 37.5)   // 烟台
+                << QPointF(121.5, 31.2)   // 上海
+                << QPointF(120.3, 27.0)   // 温州
+                << QPointF(118.1, 24.5)   // 厦门
+                << QPointF(117.0, 23.5)   // 汕头
+                << QPointF(114.1, 22.5)   // 深圳
+                << QPointF(113.5, 22.2)   // 香港
+                << QPointF(110.3, 20.0)   // 海南北
+                << QPointF(108.6, 18.2)   // 三亚
+                << QPointF(109.1, 21.5)   // 北海
+                << QPointF(106.6, 22.8)   // 南宁
+                << QPointF(103.8, 22.0)   // 云南南
+                << QPointF(97.5, 21.5)    // 西双版纳
+                << QPointF(97.0, 28.0)    // 云南西
+                << QPointF(92.0, 28.0)    // 西藏东南
+                << QPointF(79.0, 32.0)    // 西藏西南
+                << QPointF(74.0, 37.0)    // 新疆西南
+                << QPointF(73.5, 39.5)    // 喀什
+                << QPointF(79.9, 45.0)    // 新疆北
+                << QPointF(87.6, 49.2)    // 阿勒泰
+                << QPointF(97.0, 49.0)    // 内蒙古西
+                << QPointF(111.5, 43.8)   // 内蒙古中
+                << QPointF(119.9, 49.2)   // 满洲里
+                << QPointF(121.5, 53.3);  // 闭合到漠河
+    
+    m_chinaOutline.append(mainOutline);
+    
+    // 海南岛
+    QPolygonF hainan;
+    hainan << QPointF(110.3, 20.0)
+           << QPointF(111.0, 19.2)
+           << QPointF(110.5, 18.2)
+           << QPointF(108.6, 18.2)
+           << QPointF(108.6, 19.5)
+           << QPointF(110.3, 20.0);
+    m_chinaOutline.append(hainan);
+    
+    // 台湾
+    QPolygonF taiwan;
+    taiwan << QPointF(121.5, 25.3)
+           << QPointF(122.0, 24.5)
+           << QPointF(121.5, 22.0)
+           << QPointF(120.2, 22.5)
+           << QPointF(120.0, 24.5)
+           << QPointF(121.5, 25.3);
+    m_chinaOutline.append(taiwan);
+}
+
 void MapVisualization::initChinaCities()
 {
-    // 添加中国所有主要城市坐标（经纬度）- 完整版
+    // 添加中国所有主要城市坐标（经纬度）
     // 直辖市
     addCity("北京", 39.9042, 116.4074);
     addCity("上海", 31.2304, 121.4737);
@@ -67,50 +133,13 @@ void MapVisualization::initChinaCities()
     addCity("宁波", 29.8683, 121.5440);
     addCity("苏州", 31.2989, 120.5853);
     addCity("无锡", 31.4912, 120.3119);
-    addCity("常州", 31.8111, 119.9741);
-    addCity("南通", 32.0085, 120.8947);
-    addCity("徐州", 34.2044, 117.2845);
-    addCity("扬州", 32.3912, 119.4215);
-    addCity("温州", 28.0006, 120.6989);
-    addCity("嘉兴", 30.7467, 120.7505);
-    addCity("金华", 29.0788, 119.6478);
-    addCity("台州", 28.6568, 121.4206);
-    addCity("绍兴", 30.0333, 120.5800);
     addCity("三亚", 18.2528, 109.5117);
     addCity("桂林", 25.2736, 110.2901);
-    addCity("泉州", 24.8741, 118.6757);
     addCity("珠海", 22.2710, 113.5767);
-    addCity("惠州", 23.1115, 114.4152);
     addCity("东莞", 23.0205, 113.7518);
     addCity("佛山", 23.0218, 113.1219);
-    addCity("中山", 22.5171, 113.3926);
-    addCity("江门", 22.5789, 113.0819);
-    addCity("湛江", 21.2707, 110.3594);
-    addCity("汕头", 23.3540, 116.6818);
     addCity("烟台", 37.4638, 121.4478);
     addCity("威海", 37.5128, 122.1201);
-    addCity("潍坊", 36.7069, 119.1619);
-    addCity("临沂", 35.1041, 118.3563);
-    addCity("洛阳", 34.6196, 112.4539);
-    addCity("开封", 34.7971, 114.3074);
-    addCity("南阳", 32.9907, 112.5285);
-    addCity("保定", 38.8738, 115.4649);
-    addCity("唐山", 39.6304, 118.1802);
-    addCity("秦皇岛", 39.9350, 119.6000);
-    addCity("包头", 40.6575, 109.8401);
-    addCity("鞍山", 41.1106, 122.9945);
-    addCity("抚顺", 41.8579, 123.9571);
-    addCity("本溪", 41.2979, 123.7654);
-    addCity("丹东", 40.1244, 124.3831);
-    addCity("吉林", 43.8376, 126.5494);
-    addCity("齐齐哈尔", 47.3543, 123.9182);
-    addCity("大庆", 46.5896, 125.1036);
-    addCity("牡丹江", 44.5519, 129.6338);
-    addCity("绵阳", 31.4678, 104.6793);
-    addCity("德阳", 31.1270, 104.3979);
-    addCity("南充", 30.8378, 106.1105);
-    addCity("宜宾", 28.7516, 104.6430);
-    addCity("遵义", 27.7256, 106.9272);
     addCity("大理", 25.6065, 100.2671);
     addCity("丽江", 26.8559, 100.2271);
     addCity("西双版纳", 22.0089, 100.7977);
@@ -180,6 +209,15 @@ void MapVisualization::highlightRoute(const QString& departure, const QString& d
     update();
 }
 
+void MapVisualization::resetView()
+{
+    m_zoomLevel = 1.0;
+    m_panOffset = QPointF(0, 0);
+    calculateScreenPositions();
+    emit zoomChanged(m_zoomLevel);
+    update();
+}
+
 void MapVisualization::calculateScreenPositions()
 {
     for (auto it = m_cities.begin(); it != m_cities.end(); ++it) {
@@ -189,9 +227,30 @@ void MapVisualization::calculateScreenPositions()
 
 QPointF MapVisualization::latLonToScreen(double lat, double lon)
 {
-    double x = (lon - m_minLon) / (m_maxLon - m_minLon) * (width() - 2 * m_margin) + m_margin;
-    double y = (m_maxLat - lat) / (m_maxLat - m_minLat) * (height() - 2 * m_margin) + m_margin;
-    return QPointF(x, y);
+    // 基础转换
+    double baseX = (lon - m_minLon) / (m_maxLon - m_minLon) * (width() - 2 * m_margin) + m_margin;
+    double baseY = (m_maxLat - lat) / (m_maxLat - m_minLat) * (height() - 2 * m_margin) + m_margin;
+    
+    // 应用缩放和平移
+    QPointF center(width() / 2.0, height() / 2.0);
+    double scaledX = (baseX - center.x()) * m_zoomLevel + center.x() + m_panOffset.x();
+    double scaledY = (baseY - center.y()) * m_zoomLevel + center.y() + m_panOffset.y();
+    
+    return QPointF(scaledX, scaledY);
+}
+
+QPointF MapVisualization::screenToLatLon(const QPointF& screenPos)
+{
+    QPointF center(width() / 2.0, height() / 2.0);
+    
+    // 逆变换
+    double baseX = (screenPos.x() - m_panOffset.x() - center.x()) / m_zoomLevel + center.x();
+    double baseY = (screenPos.y() - m_panOffset.y() - center.y()) / m_zoomLevel + center.y();
+    
+    double lon = (baseX - m_margin) / (width() - 2 * m_margin) * (m_maxLon - m_minLon) + m_minLon;
+    double lat = m_maxLat - (baseY - m_margin) / (height() - 2 * m_margin) * (m_maxLat - m_minLat);
+    
+    return QPointF(lon, lat);
 }
 
 void MapVisualization::paintEvent(QPaintEvent *event)
@@ -201,17 +260,22 @@ void MapVisualization::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     
-    // 背景渐变 - 更现代的蓝色渐变
+    // 背景渐变
     QLinearGradient bgGradient(0, 0, 0, height());
-    bgGradient.setColorAt(0, QColor(235, 248, 255));  // 更浅的蓝
-    bgGradient.setColorAt(0.5, QColor(219, 241, 255)); // 中间色调
-    bgGradient.setColorAt(1, QColor(207, 237, 255));  // 底部颜色
+    bgGradient.setColorAt(0, QColor(235, 248, 255));
+    bgGradient.setColorAt(0.5, QColor(219, 241, 255));
+    bgGradient.setColorAt(1, QColor(207, 237, 255));
     painter.fillRect(rect(), bgGradient);
     
+    // 重新计算城市位置
+    calculateScreenPositions();
+    
     drawMap(painter);
+    drawChinaOutline(painter);
     drawRoutes(painter);
     drawCities(painter);
     drawLegend(painter);
+    drawZoomIndicator(painter);
     
     if (!m_hoveredCity.isEmpty()) {
         drawTooltip(painter);
@@ -220,11 +284,10 @@ void MapVisualization::paintEvent(QPaintEvent *event)
 
 void MapVisualization::drawMap(QPainter& painter)
 {
-    // 绘制中国地图轮廓（简化版）
+    // 绘制地图区域边框
     painter.setPen(QPen(QColor(200, 200, 200), 2));
-    painter.setBrush(QColor(255, 255, 255, 200));
+    painter.setBrush(Qt::NoBrush);
     
-    // 这里简化绘制一个矩形框代表地图区域
     QRect mapRect(m_margin, m_margin, 
                   width() - 2 * m_margin, 
                   height() - 2 * m_margin);
@@ -241,19 +304,46 @@ void MapVisualization::drawMap(QPainter& painter)
     }
 }
 
+void MapVisualization::drawChinaOutline(QPainter& painter)
+{
+    // 绘制中国地图轮廓
+    painter.setPen(QPen(QColor(59, 130, 246, 150), 2));
+    painter.setBrush(QColor(59, 130, 246, 30));
+    
+    for (const QPolygonF& outline : m_chinaOutline) {
+        QPolygonF screenPolygon;
+        for (const QPointF& point : outline) {
+            // point.x() = longitude, point.y() = latitude
+            QPointF screenPoint = latLonToScreen(point.y(), point.x());
+            screenPolygon << screenPoint;
+        }
+        painter.drawPolygon(screenPolygon);
+    }
+}
+
 void MapVisualization::drawCities(QPainter& painter)
 {
     for (auto it = m_cities.begin(); it != m_cities.end(); ++it) {
         QPointF pos = it->screenPos;
         
+        // 检查是否在可视区域内
+        if (pos.x() < 0 || pos.x() > width() || pos.y() < 0 || pos.y() > height()) {
+            continue;
+        }
+        
         bool isHovered = (it.key() == m_hoveredCity);
         
-        // 绘制城市点 - 增强视觉效果
+        // 根据缩放级别调整城市点大小
+        double baseRadius = 7 * m_zoomLevel;
+        double radius = isHovered ? baseRadius * 1.3 : baseRadius;
+        radius = qBound(4.0, radius, 15.0);
+        
+        // 绘制城市点
         if (isHovered) {
-            // 悬停时：外圈光晕效果
+            // 悬停时的光晕效果
             painter.setPen(QPen(QColor(59, 130, 246, 100), 6));
             painter.setBrush(Qt::NoBrush);
-            painter.drawEllipse(pos, 12, 12);
+            painter.drawEllipse(pos, radius + 4, radius + 4);
             
             painter.setPen(QPen(QColor(37, 99, 235), 3));
             painter.setBrush(QColor(96, 165, 250));
@@ -262,19 +352,21 @@ void MapVisualization::drawCities(QPainter& painter)
             painter.setBrush(QColor(59, 130, 246));
         }
         
-        double radius = isHovered ? 9 : 7;
         painter.drawEllipse(pos, radius, radius);
         
-        // 绘制城市名称 - 更清晰的字体
-        painter.setPen(QColor(30, 58, 138));
-        QFont font = painter.font();
-        font.setPointSize(isHovered ? 11 : 9);
-        font.setBold(isHovered);
-        font.setFamily("Microsoft YaHei UI");
-        painter.setFont(font);
-        
-        painter.drawText(QRectF(pos.x() - 40, pos.y() + 12, 80, 20),
-                        Qt::AlignCenter, it->cityName);
+        // 只在足够缩放时显示城市名称
+        if (m_zoomLevel >= 0.8) {
+            painter.setPen(QColor(30, 58, 138));
+            QFont font = painter.font();
+            int fontSize = qBound(8, (int)(9 * m_zoomLevel), 14);
+            font.setPointSize(isHovered ? fontSize + 2 : fontSize);
+            font.setBold(isHovered);
+            font.setFamily("Microsoft YaHei UI");
+            painter.setFont(font);
+            
+            painter.drawText(QRectF(pos.x() - 40, pos.y() + radius + 4, 80, 20),
+                            Qt::AlignCenter, it->cityName);
+        }
     }
 }
 
@@ -289,40 +381,68 @@ void MapVisualization::drawRoutes(QPainter& painter)
         QPointF start = m_cities[route.departure].screenPos;
         QPointF end = m_cities[route.destination].screenPos;
         
+        // 检查是否在可视区域内
+        QRectF viewRect(0, 0, width(), height());
+        if (!viewRect.contains(start) && !viewRect.contains(end)) {
+            continue;
+        }
+        
         QString routeKey = route.departure + "-" + route.destination;
         bool isHighlighted = (routeKey == m_highlightedRoute);
         
-        // 绘制航线 - 增强颜色对比
+        // 设置航线样式
         QPen pen;
         if (isHighlighted) {
-            pen = QPen(QColor(239, 68, 68), 3.5);  // 高亮航线：红色
+            pen = QPen(QColor(239, 68, 68), 3.5 * m_zoomLevel);
         } else if (route.isPopular) {
-            pen = QPen(QColor(59, 130, 246, 180), 2.5);  // 热门航线：深蓝
+            pen = QPen(QColor(59, 130, 246, 180), 2.5 * m_zoomLevel);
         } else {
-            pen = QPen(QColor(148, 163, 184, 120), 1.5);  // 普通航线：灰色
+            pen = QPen(QColor(148, 163, 184, 120), 1.5 * m_zoomLevel);
         }
         
         painter.setPen(pen);
         
-        // 绘制曲线（贝塞尔曲线）
-        QPainterPath path;
-        path.moveTo(start);
+        // 绘制直线连接
+        painter.drawLine(start, end);
         
-        QPointF ctrl = QPointF((start.x() + end.x()) / 2,
-                               qMin(start.y(), end.y()) - 50);
-        path.quadTo(ctrl, end);
+        // 在航线中点显示航班数量
+        if (route.flightCount > 0 && m_zoomLevel >= 0.8) {
+            QPointF mid = (start + end) / 2;
+            
+            // 绘制航班数量标签背景
+            QString countText = QString::number(route.flightCount);
+            QFont font = painter.font();
+            font.setPointSize(9);
+            font.setBold(true);
+            painter.setFont(font);
+            
+            QFontMetrics fm(font);
+            int textWidth = fm.horizontalAdvance(countText) + 10;
+            int textHeight = fm.height() + 4;
+            
+            QRectF labelRect(mid.x() - textWidth/2, mid.y() - textHeight/2, textWidth, textHeight);
+            
+            // 背景
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(QColor(255, 255, 255, 220));
+            painter.drawRoundedRect(labelRect, 4, 4);
+            
+            // 文字
+            painter.setPen(QColor(59, 130, 246));
+            painter.drawText(labelRect, Qt::AlignCenter, countText);
+        }
         
-        painter.drawPath(path);
-        
-        // 绘制箭头
-        if (isHighlighted || route.isPopular) {
-            double angle = std::atan2(end.y() - ctrl.y(), end.x() - ctrl.x());
-            QPointF arrowP1 = end - QPointF(std::cos(angle + M_PI / 6) * 10,
-                                            std::sin(angle + M_PI / 6) * 10);
-            QPointF arrowP2 = end - QPointF(std::cos(angle - M_PI / 6) * 10,
-                                            std::sin(angle - M_PI / 6) * 10);
+        // 绘制箭头（热门航线）
+        if ((isHighlighted || route.isPopular) && m_zoomLevel >= 0.7) {
+            double angle = std::atan2(end.y() - start.y(), end.x() - start.x());
+            double arrowSize = 10 * m_zoomLevel;
+            QPointF arrowP1 = end - QPointF(std::cos(angle + M_PI / 6) * arrowSize,
+                                            std::sin(angle + M_PI / 6) * arrowSize);
+            QPointF arrowP2 = end - QPointF(std::cos(angle - M_PI / 6) * arrowSize,
+                                            std::sin(angle - M_PI / 6) * arrowSize);
             
             painter.setBrush(pen.color());
+            painter.setPen(Qt::NoPen);
             QPolygonF arrow;
             arrow << end << arrowP1 << arrowP2;
             painter.drawPolygon(arrow);
@@ -338,7 +458,7 @@ void MapVisualization::drawLegend(QPainter& painter)
     // 图例背景
     painter.setBrush(QColor(255, 255, 255, 230));
     painter.setPen(QPen(QColor(226, 232, 240), 2));
-    painter.drawRoundedRect(legendX, legendY, 160, 120, 10, 10);
+    painter.drawRoundedRect(legendX, legendY, 160, 140, 10, 10);
     
     painter.setPen(QColor(71, 85, 105));
     QFont font = painter.font();
@@ -365,6 +485,7 @@ void MapVisualization::drawLegend(QPainter& painter)
     
     // 城市标记
     painter.setBrush(QColor(59, 130, 246));
+    painter.setPen(Qt::NoPen);
     painter.drawEllipse(QPointF(legendX + 25, legendY + 80), 5, 5);
     painter.setPen(QColor(71, 85, 105));
     painter.drawText(legendX + 50, legendY + 85, "城市");
@@ -372,6 +493,39 @@ void MapVisualization::drawLegend(QPainter& painter)
     // 统计信息
     painter.drawText(legendX + 10, legendY + 105, 
                     QString("航线总数: %1").arg(m_routes.size()));
+    painter.drawText(legendX + 10, legendY + 120, 
+                    QString("城市数: %1").arg(m_cities.size()));
+    painter.drawText(legendX + 10, legendY + 135, 
+                    QString("航班数: %1").arg(m_flights.size()));
+}
+
+void MapVisualization::drawZoomIndicator(QPainter& painter)
+{
+    // 在左下角显示缩放比例
+    int x = 20;
+    int y = height() - 60;
+    
+    // 背景
+    painter.setBrush(QColor(255, 255, 255, 220));
+    painter.setPen(QPen(QColor(200, 200, 200), 1));
+    painter.drawRoundedRect(x, y, 120, 40, 8, 8);
+    
+    // 缩放文字
+    painter.setPen(QColor(71, 85, 105));
+    QFont font = painter.font();
+    font.setPointSize(10);
+    font.setBold(true);
+    painter.setFont(font);
+    
+    QString zoomText = QString::fromUtf8("🔍 %1%").arg((int)(m_zoomLevel * 100));
+    painter.drawText(x + 10, y + 16, zoomText);
+    
+    // 操作提示
+    font.setPointSize(8);
+    font.setBold(false);
+    painter.setFont(font);
+    painter.setPen(QColor(128, 128, 128));
+    painter.drawText(x + 10, y + 32, "Ctrl+滚轮缩放");
 }
 
 void MapVisualization::drawTooltip(QPainter& painter)
@@ -393,35 +547,118 @@ void MapVisualization::drawTooltip(QPainter& painter)
                         .arg(arriveCount);
     
     // 绘制工具提示
-    QFontMetrics fm(painter.font());
-    QRect textRect = fm.boundingRect(QRect(), Qt::AlignLeft, tooltip);
-    textRect.adjust(-10, -5, 10, 5);
+    QFont font = painter.font();
+    font.setPointSize(10);
+    painter.setFont(font);
+    QFontMetrics fm(font);
+    
+    QStringList lines = tooltip.split('\n');
+    int maxWidth = 0;
+    for (const QString& line : lines) {
+        maxWidth = qMax(maxWidth, fm.horizontalAdvance(line));
+    }
+    
+    QRect textRect(0, 0, maxWidth + 20, lines.size() * fm.height() + 16);
     textRect.moveTopLeft(m_mousePos.toPoint() + QPoint(15, 15));
+    
+    // 确保提示框不超出窗口
+    if (textRect.right() > width()) {
+        textRect.moveRight(m_mousePos.x() - 10);
+    }
+    if (textRect.bottom() > height()) {
+        textRect.moveBottom(m_mousePos.y() - 10);
+    }
     
     painter.setBrush(QColor(30, 41, 59, 230));
     painter.setPen(Qt::NoPen);
-    painter.drawRoundedRect(textRect, 5, 5);
+    painter.drawRoundedRect(textRect, 8, 8);
     
     painter.setPen(Qt::white);
-    painter.drawText(textRect, Qt::AlignCenter, tooltip);
+    int yOffset = textRect.top() + fm.ascent() + 8;
+    for (const QString& line : lines) {
+        painter.drawText(textRect.left() + 10, yOffset, line);
+        yOffset += fm.height();
+    }
 }
 
 void MapVisualization::mouseMoveEvent(QMouseEvent *event)
 {
     m_mousePos = event->position();
-    QString oldHovered = m_hoveredCity;
-    m_hoveredCity = getCityAtPoint(m_mousePos);
     
-    if (oldHovered != m_hoveredCity) {
+    if (m_isDragging) {
+        // 拖拽移动
+        QPointF delta = event->position() - m_lastMousePos;
+        m_panOffset += delta;
+        m_lastMousePos = event->position();
         update();
+    } else {
+        // 检测悬停城市
+        QString oldHovered = m_hoveredCity;
+        m_hoveredCity = getCityAtPoint(m_mousePos);
+        
+        if (oldHovered != m_hoveredCity) {
+            update();
+        }
     }
 }
 
 void MapVisualization::mousePressEvent(QMouseEvent *event)
 {
-    QString city = getCityAtPoint(event->position());
-    if (!city.isEmpty()) {
-        emit cityClicked(city);
+    if (event->button() == Qt::LeftButton) {
+        QString city = getCityAtPoint(event->position());
+        if (!city.isEmpty()) {
+            emit cityClicked(city);
+        } else {
+            // 开始拖拽
+            m_isDragging = true;
+            m_lastMousePos = event->position();
+            setCursor(Qt::ClosedHandCursor);
+        }
+    }
+}
+
+void MapVisualization::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton && m_isDragging) {
+        m_isDragging = false;
+        setCursor(Qt::ArrowCursor);
+    }
+}
+
+void MapVisualization::wheelEvent(QWheelEvent *event)
+{
+    // 需要按住 Ctrl 键才能缩放
+    if (event->modifiers() & Qt::ControlModifier) {
+        // 获取缩放中心点（鼠标位置）
+        QPointF mousePos = event->position();
+        
+        // 计算缩放因子
+        double zoomFactor = 1.0;
+        if (event->angleDelta().y() > 0) {
+            zoomFactor = 1.15;  // 放大
+        } else {
+            zoomFactor = 0.87;  // 缩小
+        }
+        
+        double newZoom = m_zoomLevel * zoomFactor;
+        newZoom = qBound(m_minZoom, newZoom, m_maxZoom);
+        
+        if (newZoom != m_zoomLevel) {
+            // 保持鼠标位置不变的缩放
+            QPointF center(width() / 2.0, height() / 2.0);
+            QPointF mouseOffset = mousePos - center - m_panOffset;
+            
+            double zoomRatio = newZoom / m_zoomLevel;
+            m_panOffset = mousePos - center - mouseOffset * zoomRatio;
+            
+            m_zoomLevel = newZoom;
+            emit zoomChanged(m_zoomLevel);
+            update();
+        }
+        
+        event->accept();
+    } else {
+        event->ignore();
     }
 }
 
@@ -433,12 +670,15 @@ void MapVisualization::resizeEvent(QResizeEvent *event)
 
 QString MapVisualization::getCityAtPoint(const QPointF& point)
 {
+    double hitRadius = 15 / m_zoomLevel;  // 根据缩放调整点击范围
+    hitRadius = qBound(10.0, hitRadius, 25.0);
+    
     for (auto it = m_cities.begin(); it != m_cities.end(); ++it) {
         QPointF cityPos = it->screenPos;
         double distance = std::sqrt(std::pow(point.x() - cityPos.x(), 2) +
                                    std::pow(point.y() - cityPos.y(), 2));
         
-        if (distance < 15) { // 15像素范围内
+        if (distance < hitRadius) {
             return it.key();
         }
     }

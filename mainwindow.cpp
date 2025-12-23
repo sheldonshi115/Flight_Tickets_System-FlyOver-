@@ -20,6 +20,7 @@
 #include "dbmanager.h"
 #include "PointsShopDialog.h"
 #include "flightreminderscheduler.h"
+#include "announcementmarquee.h"
 #include <QMouseEvent>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -220,6 +221,12 @@ void MainWindow::setUserProfile(const UserProfile& profile) {
     
     // 更新主页面显示的用户信息
     updateMemberInfo();
+    
+    // 更新公告滚动条的用户信息
+    if (m_announcementMarquee) {
+        m_announcementMarquee->setCurrentUser(profile.account);
+        m_announcementMarquee->refreshAnnouncements();
+    }
     
     // 注意：不在这里调用 setIsAdmin，由 login.cpp 中调用
     // setIsAdmin(profile.isAdmin());
@@ -797,6 +804,40 @@ void MainWindow::applyTheme(bool isDark)
 // 初始化主页面
 void MainWindow::initHomePage()
 {
+    // 创建公告滚动条（在会员信息卡片上方）
+    if (!m_announcementMarquee) {
+        m_announcementMarquee = new AnnouncementMarquee(ui->pageHome);
+        m_announcementMarquee->setCurrentUser(m_appUser.account);
+        
+        // 连接公告点击信号
+        connect(m_announcementMarquee, &AnnouncementMarquee::announcementClicked, 
+                this, [this](const AnnouncementItem& item) {
+            if (item.type == AnnouncementItem::PrintReminder || 
+                item.type == AnnouncementItem::BoardingReminder) {
+                // 跳转到订单页面
+                on_btnOrders_clicked();
+            } else if (item.type == AnnouncementItem::FlightRecommend) {
+                // 跳转到航班查询页面
+                on_btnFlightQuery_clicked();
+            }
+        });
+        
+        // 将公告滚动条添加到主页布局顶部
+        QVBoxLayout* homeLayout = qobject_cast<QVBoxLayout*>(ui->pageHome->layout());
+        if (!homeLayout) {
+            // 如果没有布局，检查 homeScrollArea 的内容
+            if (ui->homeScrollArea && ui->homeScrollArea->widget()) {
+                QWidget* scrollContent = ui->homeScrollArea->widget();
+                QVBoxLayout* contentLayout = qobject_cast<QVBoxLayout*>(scrollContent->layout());
+                if (contentLayout) {
+                    contentLayout->insertWidget(0, m_announcementMarquee);
+                }
+            }
+        } else {
+            homeLayout->insertWidget(0, m_announcementMarquee);
+        }
+    }
+    
     // 创建会员信息卡片内容
     QFrame* memberCard = ui->memberInfoCard;
     

@@ -4,6 +4,7 @@
 #include <QPageSize>
 #include <QPdfWriter>
 #include <QTextDocument>
+#include <QDir>
 
 QString BoardingPass::generateBoardingPassHTML(const PassengerInfo& passenger, 
                                                  const FlightInfo& flight)
@@ -250,12 +251,19 @@ bool BoardingPass::exportToPDF(const QString& html, const QString& outputPath)
 
     QPdfWriter pdfWriter(filePath);
     pdfWriter.setPageSize(QPageSize::A4);
-    pdfWriter.setPageMargins(QMarginsF(0, 0, 0, 0));
+    pdfWriter.setPageMargins(QMarginsF(10, 10, 10, 10));
+    pdfWriter.setResolution(300);
+
+    QPainter painter(&pdfWriter);
+    if (!painter.isActive()) {
+        return false;
+    }
 
     QTextDocument document;
     document.setHtml(html);
-    document.setPageSize(pdfWriter.pageLayout().fullRectPoints().size());
-    document.drawContents(new QPainter(&pdfWriter));
+    document.setPageSize(QSizeF(pdfWriter.width(), pdfWriter.height()));
+    document.drawContents(&painter);
+    painter.end();
 
     return true;
 }

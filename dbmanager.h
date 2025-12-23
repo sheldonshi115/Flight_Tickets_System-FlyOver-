@@ -77,6 +77,7 @@ public:
 
     bool addUser(const QString& account, const QString& password, const QString& role = "user");
     QList<Order> getAllOrders(); // 获取所有订单
+    QList<Order> getOrdersByUserId(const QString& userId); // 根据用户ID获取订单
     QList<Order> findOrders(const QString& flightNum, const QDate& date, const QString& status); // 筛选订单
     bool clearAllOrders(); // 清空所有订单
      // 新增订单

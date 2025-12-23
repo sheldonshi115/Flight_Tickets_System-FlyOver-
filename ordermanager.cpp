@@ -1,6 +1,7 @@
 #include "ordermanager.h"
 #include "ui_ordermanager.h"
 #include "dbmanager.h"
+#include "boardingpass.h"
 #include <QMessageBox>
 #include <QStackedWidget>
 #include <QHeaderView>
@@ -9,6 +10,11 @@
 #include <QDebug>
 #include <QTimer>
 #include <QGraphicsDropShadowEffect>
+#include <QFileDialog>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QRandomGenerator>
+#include <QDir>
 
 OrderManager::OrderManager(QWidget *parent) :
     QWidget(parent),
@@ -40,6 +46,7 @@ OrderManager::OrderManager(QWidget *parent) :
     connect(ui->btnViewDetail, &QPushButton::clicked, this, &OrderManager::on_btnViewDetail_clicked);
     connect(ui->btnCloseDetail, &QPushButton::clicked, this, &OrderManager::on_btnCloseDetail_clicked);
     connect(ui->btnExit, &QPushButton::clicked, this, &OrderManager::on_btnExit_clicked);
+    connect(ui->btnBoardingPass, &QPushButton::clicked, this, &OrderManager::on_btnBoardingPass_clicked);
     connect(ui->twOrderList, &QTableWidget::itemSelectionChanged,
             this, &OrderManager::on_twOrderList_itemSelectionChanged);
 
@@ -506,6 +513,77 @@ void OrderManager::on_twOrderList_itemSelectionChanged()
 
     ui->btnCancelOrder->setEnabled(hasSelection);
     ui->btnViewDetail->setEnabled(hasSelection);
+    
+    // 登机牌按钮只在选中已支付订单时启用
+    bool canPrintBoardingPass = false;
+    if (hasSelection) {
+        Order selected = getSelectedOrder();
+        canPrintBoardingPass = (selected.status() == "已支付");
+    }
+    ui->btnBoardingPass->setEnabled(canPrintBoardingPass);
+}
+
+// 打印登机牌功能
+void OrderManager::on_btnBoardingPass_clicked()
+{
+    Order selected = getSelectedOrder();
+    if (!selected.isValid()) {
+        QMessageBox::warning(this, "提示", "请先选择要打印登机牌的订单！");
+        return;
+    }
+    
+    if (selected.status() != "已支付") {
+        QMessageBox::warning(this, "提示", "只有已支付的订单才能打印登机牌！");
+        return;
+    }
+    
+    // 获取航班信息
+    Flight flight = DBManager::instance().getFlightByFlightNum(selected.flightNumber());
+    
+    // 构建乘客信息
+    BoardingPass::PassengerInfo passenger;
+    passenger.name = selected.userId().isEmpty() ? "尊敬的旅客" : selected.userId();
+    passenger.idCard = "****" + QString::number(QRandomGenerator::global()->bounded(10000)).rightJustified(4, '0');
+    passenger.seatNumber = selected.seatNumber();
+    passenger.ticketNumber = selected.orderNumber();
+    passenger.bookingCode = QString("BK%1").arg(QString::number(QRandomGenerator::global()->bounded(1000000)).rightJustified(6, '0'));
+    
+    // 构建航班信息
+    BoardingPass::FlightInfo flightInfo;
+    flightInfo.flightNumber = selected.flightNumber();
+    flightInfo.departure = selected.departureCity();
+    flightInfo.destination = selected.arrivalCity();
+    flightInfo.departTime = selected.departTime();
+    flightInfo.arriveTime = selected.departTime().addSecs(7200); // 假设飞行2小时
+    flightInfo.gate = QString("G%1").arg(QRandomGenerator::global()->bounded(1, 21));
+    flightInfo.terminal = QString("T%1").arg(QRandomGenerator::global()->bounded(1, 4));
+    
+    // 生成登机牌HTML
+    QString html = BoardingPass::generateBoardingPassHTML(passenger, flightInfo);
+    
+    // 选择保存路径
+    QString defaultPath = QDir::homePath() + QString("/boarding_pass_%1.pdf").arg(selected.orderNumber());
+    QString filePath = QFileDialog::getSaveFileName(this, 
+        "保存登机牌", 
+        defaultPath,
+        "PDF文件 (*.pdf)");
+    
+    if (filePath.isEmpty()) {
+        return;
+    }
+    
+    // 导出PDF
+    if (BoardingPass::exportToPDF(html, filePath)) {
+        QMessageBox::StandardButton reply = QMessageBox::question(this, "成功", 
+            QString("登机牌已生成！\n保存路径：%1\n\n是否立即打开查看？").arg(filePath),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+        
+        if (reply == QMessageBox::Yes) {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
+        }
+    } else {
+        QMessageBox::critical(this, "失败", "登机牌生成失败，请重试！");
+    }
 }
 
 // 现代化样式应用
