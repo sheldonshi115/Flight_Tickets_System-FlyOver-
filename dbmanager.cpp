@@ -12,7 +12,7 @@
 const QString DBManager::DB_NAME = "flight_ticket_db";
 const QString DBManager::DB_HOST = "localhost";
 const QString DBManager::DB_USER = "root";       // 你的MySQL用户名
-const QString DBManager::DB_PWD = "pwd"; // 你的MySQL密码
+const QString DBManager::DB_PWD = "Srt13141314@"; // 你的MySQL密码
 const int DBManager::DB_PORT = 3306;             // 默认端口
 
 // 单例模式：静态实例
@@ -468,6 +468,37 @@ QList<Order> DBManager::getAllOrders()
         }
     } else {
         qWarning() << "查询所有订单失败:" << query.lastError().text();
+    }
+    return orders;
+}
+
+// 根据用户ID获取订单
+QList<Order> DBManager::getOrdersByUserId(const QString& userId)
+{
+    QList<Order> orders;
+    if (!db.isOpen() || userId.isEmpty()) return orders;
+
+    QSqlQuery query(db);
+    query.prepare("SELECT id, order_num, flight_num, departure, destination, depart_time, seat_num, price, status, account FROM orders WHERE account = :account ORDER BY create_time DESC");
+    query.bindValue(":account", userId);
+    
+    if (query.exec()) {
+        while (query.next()) {
+            Order order;
+            order.setId(query.value("id").toInt());
+            order.setOrderNumber(query.value("order_num").toString());
+            order.setFlightNumber(query.value("flight_num").toString());
+            order.setDepartureCity(query.value("departure").toString());
+            order.setArrivalCity(query.value("destination").toString());
+            order.setDepartTime(query.value("depart_time").toDateTime());
+            order.setSeatNumber(query.value("seat_num").toString());
+            order.setPrice(query.value("price").toDouble());
+            order.setStatus(query.value("status").toString());
+            order.setUserId(query.value("account").toString());
+            orders.append(order);
+        }
+    } else {
+        qWarning() << "查询用户订单失败:" << query.lastError().text();
     }
     return orders;
 }
