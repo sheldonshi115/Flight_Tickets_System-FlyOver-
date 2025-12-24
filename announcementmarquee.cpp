@@ -157,11 +157,11 @@ void AnnouncementMarquee::loadRandomRecommendations()
         item.type = AnnouncementItem::FlightRecommend;
         item.icon = "🌟";
         item.flightNumber = flight.flightNumber();
-        item.text = QString("【热门推荐】%1 %2→%3 ¥%.0f起")
+        item.text = QString("【热门推荐】%1 %2→%3 ¥%4起")
             .arg(flight.flightNumber())
             .arg(flight.departureCity())
             .arg(flight.arrivalCity())
-            .arg(flight.price());
+            .arg(flight.price(), 0, 'f', 0);
         m_announcements.append(item);
     }
 }
